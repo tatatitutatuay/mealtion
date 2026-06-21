@@ -14,6 +14,10 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('Mealtion'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await Supabase.instance.client.auth.signOut();

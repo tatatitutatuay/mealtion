@@ -4,7 +4,7 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/verify_email_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
-import '../../features/home/screens/home_screen.dart';
+import '../../features/home/screens/main_shell.dart';
 import 'auth_guard.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -32,7 +32,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/',
-        builder: (_, __) => const HomeScreen(),
+        builder: (_, __) => const MainShell(),
       ),
     ],
   );
