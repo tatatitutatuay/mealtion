@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -15,13 +16,13 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
+              await Supabase.instance.client.auth.signOut();
             },
           ),
         ],
       ),
       body: Center(
-        child: Text('Welcome, ${auth?.displayName ?? "User"}!'),
+        child: Text('Welcome, ${auth.valueOrNull?.displayName ?? "User"}!'),
       ),
     );
   }

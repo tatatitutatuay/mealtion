@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -25,9 +25,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (_emailController.text.trim().isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      // Forgot Password API call
-      final api = ref.read(authApiProvider);
-      await api.forgotPassword(_emailController.text.trim());
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        _emailController.text.trim(),
+      );
       setState(() => _sent = true);
     } catch (e) {
       if (mounted) {

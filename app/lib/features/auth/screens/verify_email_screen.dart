@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String email;
@@ -24,7 +24,11 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   Future<void> _verify() async {
     setState(() => _isLoading = true);
     try {
-      await ref.read(authProvider.notifier).verifyEmail(_tokenController.text.trim());
+      await Supabase.instance.client.auth.verifyOTP(
+        email: widget.email,
+        token: _tokenController.text.trim(),
+        type: OtpType.signup,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Email verified! You can now log in.')),
