@@ -1,5 +1,7 @@
 # Phase 1: Project Scaffold + Auth Implementation Plan
 
+**STATUS: ✅ COMPLETE** (all tasks executed, committed at `fa93be6`)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Scaffold the monorepo with a working Go backend and Flutter app, with full email/password auth (sign up, email verification, login, token refresh, forgot password, delete account).
@@ -9,6 +11,8 @@
 **Tech Stack:** Go 1.22+, Chi, pgx, golang-migrate, Flutter 3.x, Riverpod, GoRouter, flutter_secure_storage
 
 **Prerequisites:** Go 1.22+, Flutter 3.x, PostgreSQL running locally, Dart SDK.
+
+**Database:** PostgreSQL runs via Docker Compose at `docker-compose.yml`. Start with `docker compose up -d`. Migrations are in `backend/migrations/` and were applied against the running container via `docker exec`.
 
 ---
 
@@ -61,7 +65,7 @@
 **Files:**
 - Create: `backend/go.mod`
 
-- [ ] **Step 1: Create go.mod**
+- [x] **Step 1: Create go.mod**
 
 Run:
 ```powershell
