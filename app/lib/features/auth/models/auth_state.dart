@@ -1,0 +1,28 @@
+class AuthState {
+  final String id;
+  final String email;
+  final String displayName;
+  final String? username;
+  final String? photoUrl;
+  final bool onboardingCompleted;
+
+  AuthState({
+    required this.id,
+    required this.email,
+    required this.displayName,
+    this.username,
+    this.photoUrl,
+    this.onboardingCompleted = false,
+  });
+
+  factory AuthState.fromJson(Map<String, dynamic> json) {
+    return AuthState(
+      id: json['id'] as String,
+      email: json['email'] as String,
+      displayName: json['display_name'] as String? ?? '',
+      username: json['username'] as String?,
+      photoUrl: json['photo_url'] as String?,
+      onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
+    );
+  }
+}
