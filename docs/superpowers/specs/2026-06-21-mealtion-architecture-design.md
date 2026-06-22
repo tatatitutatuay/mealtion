@@ -1,7 +1,7 @@
 # Mealtion — Architecture Design Document
 
-Date: 2026-06-21
-Status: Draft — updated for Supabase-only architecture
+Date: 2026-06-22
+Status: Updated — Figma design system + screen map
 MVP Spec: `Mealtion Document.md`
 
 ---
@@ -10,38 +10,37 @@ MVP Spec: `Mealtion Document.md`
 
 ```
 mealtion/
-├── app/                      # Flutter app (only code)
+├── app/                          # Flutter app (only code)
 │   ├── lib/
 │   │   ├── main.dart
 │   │   ├── core/
-│   │   │   ├── supabase/     # Supabase client, providers
-│   │   │   ├── router/       # GoRouter
-│   │   │   └── theme/        # App theme
+│   │   │   ├── supabase/         # Supabase client provider
+│   │   │   ├── router/           # GoRouter + auth guard
+│   │   │   └── theme/            # App theme (Figma tokens)
 │   │   └── features/
-│   │       ├── auth/
-│   │       │   ├── screens/
-│   │       │   ├── providers/
-│   │       │   ├── models/
-│   │       │   └── widgets/
-│   │       ├── home/
-│   │       ├── add_meal/
-│   │       ├── friends/
-│   │       ├── feed/
-│   │       ├── gallery/
-│   │       ├── bookmarks/
-│   │       ├── profile/
-│   │       ├── notifications/
-│   │       └── settings/
+│   │       ├── auth/             # Login, signup, verify, forgot-pw
+│   │       ├── home/             # Tab shell, Home screen (calendar, stats)
+│   │       ├── add_meal/         # Bottom sheet form + draft system
+│   │       ├── friends/          # Feed, Friends list, Connect, Search
+│   │       ├── feed/             # Friends feed detail (future)
+│   │       ├── gallery/          # Grid/timeline views
+│   │       ├── profile/          # Owner + friend profiles
+│   │       ├── bookmarks/        # Base + custom collections
+│   │       ├── notifications/    # In-app notification list
+│   │       └── settings/         # App settings
 │   ├── pubspec.yaml
 │   └── test/
-│
-├── supabase/                 # Supabase config
-│   ├── migrations/           # SQL migrations (schema)
-│   └── seed.sql              # Seed data
-│
-├── docker-compose.yml        # Supabase local dev
-├── docs/superpowers/specs/
-└── README.md
+├── supabase/                     # Supabase config
+│   ├── migrations/
+│   │   ├── 001_schema.sql        # All tables
+│   │   └── 002_rls.sql           # Row Level Security
+│   └── seed.sql
+├── docs/
+│   └── superpowers/
+│       ├── specs/                # Architecture, design docs
+│       └── plans/                # Phase implementation plans
+├── opencode.json
+└── Mealtion Document.md          # Full MVP functional spec
 ```
 
 ---
@@ -50,118 +49,201 @@ mealtion/
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| Mobile Framework | Flutter | Cross-platform iOS + Android |
-| State Management | Riverpod | Compile-safe, testable, `AsyncValue` handles all states per spec §31 |
+| Mobile Framework | Flutter (Dart) | Cross-platform iOS + Android + Web |
+| State Management | Riverpod | Compile-safe, testable, `AsyncValue` for loading/error/data |
 | Navigation | GoRouter | Deep linking, auth redirect guards |
-| Local Storage | Isar | Offline drafts and cache |
-| Backend | **Supabase** (PostgreSQL + Auth + Storage + Realtime) | All-in-one BaaS — no custom server |
+| Backend | Supabase (PostgreSQL + Auth + Storage + Realtime) | All-in-one BaaS |
 | Database | PostgreSQL (managed by Supabase) | Relational, RLS for access control |
-| Photo Storage | Supabase Storage (S3-compatible) | CDN, image resizing, RLS-protected |
-| Auth | Supabase Auth (email/password) | Built-in, handles JWTs, refresh, email verification |
-| Push | Supabase Realtime + FCM | Real-time notifications |
-| Hosting | Supabase (backend) + Flutter (mobile) | Deploy independently |
+| Photo Storage | Supabase Storage (S3-compatible) | CDN, RLS-protected |
+| Auth | Supabase Auth (email/password) | Built-in JWT, refresh, email verification |
+| Push | Supabase Realtime + FCM | Future: real-time notifications |
+| Local Drafts | Isar (planned) | Offline draft persistence |
 
 ---
 
 ## 3. Flutter State Management — Riverpod
 
-Same as before — each feature owns focused providers. No change from the original design.
+Data flow: `Widget → ref.watch(provider) → Supabase SDK → Supabase cloud`
 
-Data flow: Widget → Provider → Supabase SDK → Supabase cloud
+- `StateProvider` for simple state (auth state)
+- `StateNotifierProvider` for complex form state (add meal)
+- `Provider` for API services and singletons (supabase client)
+- `FutureProvider` / `AsyncNotifierProvider` for data fetching from Supabase
 
-No custom REST API. All reads/writes go through:
-- `supabase.from('meals').select(...)` for queries
-- `supabase.auth.signUp(...)` / `supabase.auth.signIn(...)` for auth
-- `supabase.storage.from('photos').upload(...)` for photos
-- Row Level Security enforces access rules server-side
-
----
-
-## 4. Supabase Database Schema (PostgreSQL)
-
-Same domain models from the original design, but managed via Supabase migrations.
-
-**Tables:** users (managed by Supabase Auth), meals, meal_foods, meal_photos, meal_tags, restaurants, branches, friends, likes, comments, bookmark_collections, bookmark_items, notifications
-
-Auth users table is Supabase's built-in `auth.users`. Our profile data in a public `profiles` table.
+No custom REST API. All reads/writes use Supabase SDK directly.
 
 ---
 
-## 5. Row Level Security (Access Control)
+## 4. Figma Design System — Theme Tokens
 
-RLS replaces the Go backend's middleware/service layer:
+Source: Figma page "Design System" (0:1)
 
-| Table | Policy | Logic |
+### 4.1 Color Palette
+
+| Token | Hex | Usage |
 |---|---|---|
-| `profiles` | Read own profile + friends | `auth.uid() = id OR id IN (friend_ids)` |
-| `meals` | Read own + friend non-private | `auth.uid() = user_id OR (is_private = false AND user_id IN (accepted_friend_ids))` |
-| `meals` | Insert/Update/Delete | Only `auth.uid() = user_id` |
-| `meal_photos` | Same as meals | Cascade from meal |
-| `friends` | Only involved users | `auth.uid() = user_id OR auth.uid() = friend_user_id` |
-| `likes` | Read if meal accessible | Check meal access |
-| `comments` | Delete own or own meal | `auth.uid() = user_id OR meal owner` |
-| `bookmarks` | Own collections + items | `auth.uid() = user_id` |
-| `notifications` | Own notifications | `auth.uid() = user_id` |
-| Storage `photos` | Upload own meals, read accessible | Match meal ownership + access |
+| Primary/Normal | `#F5A891` | Primary actions, selected tab, FAB |
+| Primary/... | Coral scale | Pressed, disabled variants |
+| Neutral/... | Greys | Backgrounds, dividers, text |
+| Foundation/Grey/grey-50 | `#F8F8F8` | Screen background |
+| Foundation/Grey/grey-100 | `#EAEAEA` | Divider, border |
+| Foundation/Grey/grey-500 | `#BBBBBB` | Disabled text |
+| Foundation/Grey/grey-900 | `#4F4F4F` | Secondary text |
+| Black & White/900 | `#000000` | Primary text |
+| Black & White/100 | `#FFFFFF` | Surface white |
+| Success/700 | `#0EC760` | Positive/heavy indicators |
+| Warning/700 | `#FFAA0F` | Warning/moderate indicators |
+| Error/700 | `#FF3D00` | Error/danger indicators |
+
+### 4.2 Typography
+
+| Token | Family | Weight | Size | Line H | Usage |
+|---|---|---|---|---|---|
+| H4 | Noto Sans Thai | SemiBold 600 | 28 | 34 | Page headers |
+| H5 | Noto Sans Thai | SemiBold 600 | 24 | 28 | Section titles |
+| S1 | Noto Sans Thai | SemiBold 600 | 18 | 28 | Card titles |
+| S2 | Noto Sans Thai | SemiBold 600 | 16 | 24 | Subsection titles |
+| B1 | Noto Sans Thai | Regular 400 | 16 | 24 | Body text |
+| B2 | Noto Sans Thai | Medium 500 | 16 | 24 | Body emphasis |
+| B3 | Noto Sans Thai | Regular 400 | 14 | 20 | Small body |
+| B4 | Noto Sans Thai | Medium 500 | 14 | 20 | Small emphasis |
+| B5 | Noto Sans Thai | Regular 400 | 12 | 16 | Captions |
+| B6 | Noto Sans Thai | Medium 500 | 12 | 16 | Caption emphasis |
+| C1-C3 | Noto Sans Thai | Medium 500 | 10-14 | 14-20 | Chips, badges |
+| Button/Giant | Inter | SemiBold 600 | 18 | 24 | Primary CTA |
+| Button/Large | Inter | SemiBold 600 | 16 | 20 | Buttons |
+| Button/Medium | Inter | SemiBold 600 | 14 | 16 | Small buttons |
+| Button/Small | Inter | SemiBold 600 | 12 | 16 | Tiny buttons |
+
+### 4.3 Spacing & Radius
+
+| Token | Value | Usage |
+|---|---|---|
+| radius-xs | 8 | Card corners, button radius |
+| Button/Tiny radius | 6 | Small buttons |
+| Layout margin | 24 | Screen edge padding |
+| Card gap | 16 | Between cards/sections |
+
+### 4.4 Shadows
+
+Card shadow: `DropShadow(color: #1319271A offset: (0,10) radius: 32 spread: -4)` + `DropShadow(#1319271F offset: (0,6) radius: 14 spread: -6)`
 
 ---
 
-## 6. Auth Flow (Supabase Auth)
+## 5. Figma Screen → Code Map
 
-Supabase Auth replaces the custom Go auth:
+| Figma Frame | Screen ID | Code File | Status |
+|---|---|---|---|
+| 1-1 (Page-Home-1) | 98:4545 | `home_screen.dart` | Placeholder |
+| 2-1 (Page-Friend-1) | 98:7588 | `friends_screen.dart` | Placeholder |
+| 2-3 (Page-Friend-2) | 106:9508 | — | Not created |
+| 2-4 (Page-Friend-3) | 106:9881 | — | Not created |
+| 2-5 (Page-Friend-4) | 106:10053 | — | Not created |
+| 5-1 (Page-Profile-1) | 98:8228 | `profile_screen.dart` | Stub |
+| Add Meal (bottom sheet) | — | `add_meal_sheet.dart` | Built, untested |
+| Auth screens | — | `login/signup/verify/forgot` | Done |
+| Main shell (bottom nav) | 98:6316 | `main_shell.dart` | Scaffolded |
 
-- **Sign up:** `supabase.auth.signUp(email, password)` — sends confirmation email automatically
-- **Verify email:** User clicks link → Supabase marks email verified
-- **Login:** `supabase.auth.signIn(email, password)` — returns session with tokens
-- **Token refresh:** Automatic via `supabase.auth.onAuthStateChange`
-- **Forgot password:** `supabase.auth.resetPasswordForEmail(email)`
-- **Delete account:** Admin API via Supabase dashboard, or custom edge function
-- **Session persistence:** Supabase stores tokens automatically
+### 5.1 Home (1-1) Sections
 
-Flutter `AuthNotifier` listens to `supabase.auth.onAuthStateChange` to react to login/logout.
+1. **Greeting bar**: "Hello, Meow!" + "How was your meal" + bell notification icon (badge "5")
+2. **Calendar widget**: Scrollable month (March 2026), 7-column grid with date cells, dot indicators on days with meals, month navigation arrows, "Health" filter dropdown
+3. **Emotion filters**: Like / Neutral / Dislike — colored dots with labels, horizontal row
+4. **Monthly Snapshot**: 4 stats — Meals (42), Foods (30), Place (18), Spent (8,150฿)
+5. **Recap cards**: Monthly Wrapped (April 2026) + Yearly Wrapped (2026) — rounded cards with icon
+6. **Recent entries**: 3 meal cards — each with photo thumbnail, food name, restaurant + location, price + tags + feeling, bookmark icon
+
+### 5.2 Friends - Feed (2-1)
+
+- "Friends" header + add-user icon with notification badge
+- Feed/Friends toggle tabs
+- Feed posts: avatar + name + timestamp, meal photo (full width), food name, location, price + tags + feeling, caption text
+- Like (heart, count) + Comment (bubble, count) + Bookmark icons
+- Comment preview rows: avatar + name + "time ago" + comment text
+
+### 5.3 Friends - List (2-3)
+
+- Back arrow + "Friends" title + add-user icon
+- Feed/Friends toggle (Friends tab active)
+- Friend list rows: avatar + name + bio, "Friends" tag + cancel button
+
+### 5.4 Friends - Connect (2-4)
+
+- Back arrow + "Connect" title
+- Search bar with magnifying glass icon + "Search ID" placeholder
+- "Recent" section with recent search result (avatar + name + bio, check + cancel buttons)
+- "Pending" section with request rows + "Send Request" button
+
+### 5.5 Friends - User Search (2-5)
+
+- Back arrow + "Connect" title
+- Search bar with username text
+- Profile card: centered large avatar, username, bio, "Send Request" button
+
+### 5.6 Profile (5-1)
+
+- Cover image (rounded rectangle top)
+- Avatar (circle, centered on cover overlap)
+- Username + bio
+- Edit Profile / View Profile buttons
+- Stats row: Meals, Foods, Place — centered below buttons
 
 ---
 
-## 7. Photo Handling (Supabase Storage)
+## 6. Supabase Database Schema
 
-- Upload: `supabase.storage.from('meal-photos').upload(path, file)`
+Tables: `profiles`, `restaurants`, `branches`, `meals`, `meal_foods`, `meal_photos`, `meal_tags`, `friends`, `likes`, `comments`, `bookmark_collections`, `bookmark_items`, `notifications`
+
+Full schema in `supabase/migrations/001_schema.sql`. RLS in `002_rls.sql`.
+
+Auth: Supabase's built-in `auth.users` table. Profile data in public `profiles` table.
+
+---
+
+## 7. Auth Flow
+
+- `StateProvider<AuthState?>` initialized to null
+- `authInitProvider` syncs current Supabase session on startup + listens to `onAuthStateChange`
+- Auth guard reads `ref.read(authProvider) != null` to determine login state
+- Login/signup screens explicitly set auth provider after success
+- Logout navigates to `/auth/login`
+
+---
+
+## 8. Photo Handling
+
 - Path: `{user_id}/{meal_id}/{sort_order}.{ext}`
-- Serve: `supabase.storage.from('meal-photos').getPublicUrl(path)` — or signed URLs for private photos
-- RLS on storage bucket: only meal owner can upload, friends can read
+- Upload via `supabase.storage.from('meal-photos').upload()`
+- Serve via `getPublicUrl()` or signed URLs for private meals
+- RLS on storage bucket: owner upload, owner+fri
 
 ---
 
-## 8. Offline & Drafts (same logic, different implementation)
+## 9. Offline & Drafts
 
-- Drafts stored in Isar locally, never sent to Supabase until publish
-- On publish failure → auto-save as draft, show offline toast
-- On edit failure → keep edit screen open, show error, no auto-draft
-
----
-
-## 9. Notifications (Supabase Realtime + Edge Functions)
-
-- Supabase Edge Function triggers on INSERT to `notifications` table
-- Sends push via FCM
-- Flutter listens via `supabase.channel('notifications')` for real-time badge updates
+- Drafts stored locally via Isar (not yet implemented)
+- Draft saved on sheet close if data exists
+- On publish failure, auto-save as draft
 
 ---
 
-## 10. Error & Loading States
+## 10. Notifications (Future)
 
-Unchanged from original design — `AsyncValue.when()` on all Riverpod providers.
+- Edge Function triggers on INSERT to `notifications` table
+- Flutter listens via Realtime channel for badge updates
 
 ---
 
-## 11. Currency & Price
+## 11. Error & Loading States
 
-Business logic (price level calculation, threshold checking) moves to the Flutter client side or a Supabase Edge Function if logic is complex.
+All async data uses Riverpod `AsyncValue.when()` pattern for loading/error/data states per MVP spec §31.
 
 ---
 
 ## 12. Privacy & Access Rules
 
-All enforced via RLS — no custom backend code needed. The `meals` table RLS ensures:
-- Own meals always visible to owner
-- Friend meals visible only if not private + friendship active
-- Deleted/privatized meals auto-hidden
+All enforced via Supabase RLS:
+- Own meals always visible
+- Friend meals visible only if not private + friendship accepted
+- Deleted meals hidden automatically
+- No public discovery

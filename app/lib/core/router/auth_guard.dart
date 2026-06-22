@@ -4,8 +4,7 @@ import '../../features/auth/providers/auth_provider.dart';
 
 class AuthGuard {
   static Future<String?> redirect(Ref ref, GoRouterState state) async {
-    final authAsync = ref.read(authProvider);
-    final isLoggedIn = authAsync.valueOrNull != null;
+    final isLoggedIn = ref.read(authProvider) != null;
     final isAuthRoute = state.matchedLocation.startsWith('/auth');
 
     if (!isLoggedIn && !isAuthRoute) {

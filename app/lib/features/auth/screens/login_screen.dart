@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/auth_state.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,6 +34,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        ref.read(authProvider.notifier).state = AuthState.fromSession(session);
+      }
       if (mounted) context.go('/');
     } catch (e) {
       if (mounted) {
