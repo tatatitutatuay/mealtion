@@ -17,6 +17,7 @@ app/android/.gradle/
 app/android/local.properties
 app/.idea/
 app/*.iml
+app/windows/
 
 # Go
 bin/
