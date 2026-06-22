@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
 import 'home_screen.dart';
-import 'friends_screen.dart';
+import '../../friends/screens/friends_screen.dart';
 import 'gallery_screen.dart';
 import 'profile_screen.dart';
 
