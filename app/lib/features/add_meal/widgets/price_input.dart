@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mealtion/core/theme/colors.dart';
 
 class PriceInput extends StatefulWidget {
   final double? price;
@@ -34,10 +35,10 @@ class _PriceInputState extends State<PriceInput> {
 
   Color _levelColor(String level) {
     switch (level) {
-      case 'Affordable': return Colors.green;
-      case 'Moderate': return Colors.orange;
-      case 'Expensive': return Colors.red;
-      default: return Colors.grey;
+      case 'Affordable': return AppColors.success;
+      case 'Moderate': return AppColors.warning;
+      case 'Expensive': return AppColors.error;
+      default: return AppColors.grey500;
     }
   }
 
@@ -76,7 +77,7 @@ class _PriceInputState extends State<PriceInput> {
                 child: Text(level, style: TextStyle(color: _levelColor(level), fontSize: 12)),
               ),
               const SizedBox(width: 8),
-              Text('Based on your thresholds', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+              Text('Based on your thresholds', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
             ],
           ),
         ],

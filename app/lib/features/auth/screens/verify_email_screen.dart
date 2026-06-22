@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mealtion/core/theme/colors.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String email;
@@ -55,7 +56,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.mark_email_unread_outlined, size: 64, color: Colors.grey),
+            const Icon(Icons.mark_email_unread_outlined, size: 64, color: AppColors.grey500),
             const SizedBox(height: 24),
             Text(
               'Check your email',
@@ -66,7 +67,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
             Text(
               'We sent a verification link to ${widget.email}',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
             TextField(

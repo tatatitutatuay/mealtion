@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mealtion/core/theme/colors.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -67,7 +68,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     : const Text('Send Reset Link'),
               ),
             ] else ...[
-              const Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+              const Icon(Icons.check_circle_outline, size: 64, color: AppColors.success),
               const SizedBox(height: 16),
               const Text('If that email is registered, a reset link has been sent.'),
               const SizedBox(height: 16),

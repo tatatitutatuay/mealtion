@@ -1,21 +1,41 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const primary = Color(0xFF4CAF50);
-  static const primaryDark = Color(0xFF388E3C);
-  static const accent = Color(0xFFFFC107);
-  static const background = Color(0xFFF5F5F5);
-  static const surface = Colors.white;
-  static const error = Color(0xFFE53935);
-  static const textPrimary = Color(0xFF212121);
-  static const textSecondary = Color(0xFF757575);
-  static const priceAffordable = Color(0xFF4CAF50);
-  static const priceModerate = Color(0xFFFFC107);
-  static const priceExpensive = Color(0xFFE53935);
-  static const heavinessLight = Color(0xFF4CAF50);
-  static const heavinessSatisfying = Color(0xFFFFC107);
-  static const heavinessHeavy = Color(0xFFE53935);
-  static const feelingLike = Color(0xFF4CAF50);
-  static const feelingNeutral = Color(0xFFFFC107);
-  static const feelingDislike = Color(0xFFE53935);
+  // Primary
+  static const primary = Color(0xFFF5A891);
+
+  // Foundation Grey
+  static const grey50 = Color(0xFFF8F8F8);
+  static const grey100 = Color(0xFFEAEAEA);
+  static const grey500 = Color(0xFFBBBBBB);
+  static const grey900 = Color(0xFF4F4F4F);
+
+  // Black & White
+  static const black = Color(0xFF000000);
+  static const white = Color(0xFFFFFFFF);
+
+  // Semantic
+  static const success = Color(0xFF0EC760);
+  static const warning = Color(0xFFFFAA0F);
+  static const error = Color(0xFFFF3D00);
+
+  // Semantic aliases for tags
+  static const priceAffordable = success;
+  static const priceModerate = warning;
+  static const priceExpensive = error;
+  static const heavinessLight = success;
+  static const heavinessSatisfying = warning;
+  static const heavinessHeavy = error;
+  static const feelingLike = success;
+  static const feelingNeutral = warning;
+  static const feelingDislike = error;
+
+  // Background
+  static const background = grey50;
+  static const surface = white;
+
+  // Text
+  static const textPrimary = black;
+  static const textSecondary = grey900;
+  static const textDisabled = grey500;
 }

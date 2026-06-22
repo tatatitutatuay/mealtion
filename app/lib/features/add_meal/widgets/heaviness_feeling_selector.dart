@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mealtion/core/theme/colors.dart';
 import '../models/add_meal_state.dart';
 
 class HeavinessFeelingSelector extends StatelessWidget {
@@ -25,9 +26,9 @@ class HeavinessFeelingSelector extends StatelessWidget {
         Wrap(
           spacing: 8,
           children: [
-            _buildHeavinessOption('Light', Heaviness.light, Colors.green),
-            _buildHeavinessOption('Satisfying', Heaviness.satisfying, Colors.orange),
-            _buildHeavinessOption('Heavy', Heaviness.heavy, Colors.red),
+            _buildHeavinessOption('Light', Heaviness.light, AppColors.success),
+            _buildHeavinessOption('Satisfying', Heaviness.satisfying, AppColors.warning),
+            _buildHeavinessOption('Heavy', Heaviness.heavy, AppColors.error),
           ],
         ),
         const SizedBox(height: 16),
@@ -36,9 +37,9 @@ class HeavinessFeelingSelector extends StatelessWidget {
         Wrap(
           spacing: 8,
           children: [
-            _buildFeelingOption('Like', Feeling.like, Colors.green),
-            _buildFeelingOption('Neutral', Feeling.neutral, Colors.orange),
-            _buildFeelingOption('Dislike', Feeling.dislike, Colors.red),
+            _buildFeelingOption('Like', Feeling.like, AppColors.success),
+            _buildFeelingOption('Neutral', Feeling.neutral, AppColors.warning),
+            _buildFeelingOption('Dislike', Feeling.dislike, AppColors.error),
           ],
         ),
       ],

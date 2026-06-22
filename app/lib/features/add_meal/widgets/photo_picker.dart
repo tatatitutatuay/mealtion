@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:mealtion/core/theme/colors.dart';
 import '../models/add_meal_state.dart';
 
 class PhotoPicker extends StatelessWidget {
@@ -42,14 +43,13 @@ class PhotoPicker extends StatelessWidget {
           Container(
             height: 120,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.grey100),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child: Text(
                 'Add at least 1 photo',
-                style: TextStyle(color: Colors.grey[500]),
-              ),
+style: TextStyle(color: AppColors.grey500),
             ),
           )
         else
@@ -81,7 +81,7 @@ class PhotoPicker extends StatelessWidget {
                             color: Colors.black54,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 10)),
+                          child: const Text('Cover', style: TextStyle(color: AppColors.white, fontSize: 10)),
                         ),
                       ),
                     Positioned(
@@ -97,7 +97,7 @@ class PhotoPicker extends StatelessWidget {
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, color: Colors.white, size: 16),
+                          child: const Icon(Icons.close, color: AppColors.white, size: 16),
                         ),
                       ),
                     ),
@@ -108,7 +108,7 @@ class PhotoPicker extends StatelessWidget {
           ),
         if (photos.isNotEmpty)
           Text('First photo is the cover. Drag to reorder.',
-              style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+              style: TextStyle(color: AppColors.grey500, fontSize: 12)),
       ],
     );
   }

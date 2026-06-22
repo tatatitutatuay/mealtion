@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealtion/core/theme/colors.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
 import 'home_screen.dart';
 import 'friends_screen.dart';
@@ -62,10 +63,10 @@ class _MainShellState extends ConsumerState<MainShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: selected ? Theme.of(context).colorScheme.primary : Colors.grey),
+            Icon(icon, color: selected ? Theme.of(context).colorScheme.primary : AppColors.grey500),
             Text(label, style: TextStyle(
               fontSize: 11,
-              color: selected ? Theme.of(context).colorScheme.primary : Colors.grey,
+              color: selected ? Theme.of(context).colorScheme.primary : AppColors.grey500,
             )),
           ],
         ),

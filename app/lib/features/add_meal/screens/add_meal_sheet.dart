@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mealtion/core/theme/colors.dart';
 import '../models/add_meal_state.dart';
 import '../providers/add_meal_provider.dart';
 import '../providers/meal_api_provider.dart';
@@ -117,7 +118,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, 'discard'),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Discard'),
           ),
           TextButton(
