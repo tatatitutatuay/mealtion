@@ -134,15 +134,15 @@ Card shadow: `DropShadow(color: #1319271A offset: (0,10) radius: 32 spread: -4)`
 
 | Figma Frame | Screen ID | Code File | Status |
 |---|---|---|---|
-| 1-1 (Page-Home-1) | 98:4545 | `home_screen.dart` | Placeholder |
-| 2-1 (Page-Friend-1) | 98:7588 | `friends_screen.dart` | Placeholder |
-| 2-3 (Page-Friend-2) | 106:9508 | — | Not created |
-| 2-4 (Page-Friend-3) | 106:9881 | — | Not created |
-| 2-5 (Page-Friend-4) | 106:10053 | — | Not created |
-| 5-1 (Page-Profile-1) | 98:8228 | `profile_screen.dart` | Stub |
+| 1-1 (Page-Home-1) | 98:4545 | `home_screen.dart` | Built |
+| 2-1 (Page-Friend-1) | 98:7588 | `friends/screens/friends_screen.dart` | Built |
+| 2-3 (Page-Friend-2) | 106:9508 | `friends/screens/friends_screen.dart` | Built (Friends tab) |
+| 2-4 (Page-Friend-3) | 106:9881 | `friends/screens/connect_screen.dart` | Built |
+| 2-5 (Page-Friend-4) | 106:10053 | `friends/screens/user_search_screen.dart` | Built |
+| 5-1 (Page-Profile-1) | 98:8228 | `profile_screen.dart` | Built |
 | Add Meal (bottom sheet) | — | `add_meal_sheet.dart` | Built, untested |
 | Auth screens | — | `login/signup/verify/forgot` | Done |
-| Main shell (bottom nav) | 98:6316 | `main_shell.dart` | Scaffolded |
+| Main shell (bottom nav) | 98:6316 | `main_shell.dart` | Built |
 
 ### 5.1 Home (1-1) Sections
 
