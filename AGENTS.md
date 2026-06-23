@@ -56,11 +56,15 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. Build & Verify Commands
 
-Flutter is at `D:\flutter\bin`. Always prepend to PATH:
+Flutter is at `D:\flutter\bin`. Android SDK at `C:\Users\aitsa\AppData\Local\Android\Sdk`. Always prepend to PATH:
 ```powershell
-$env:Path = "D:\flutter\bin;$env:Path"
+$env:Path = "D:\flutter\bin;C:\Program Files\Android\Android Studio\jbr\bin;C:\Users\aitsa\AppData\Local\Android\Sdk\platform-tools;C:\Users\aitsa\AppData\Local\Android\Sdk\emulator;C:\Users\aitsa\AppData\Local\Android\Sdk\cmdline-tools\latest\bin;$env:Path"
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+$env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 ```
 
 - **Analyze**: `flutter analyze` (from `app/` directory)
-- **Build web**: `flutter build web --debug` (no Android SDK available; use web to verify compilation)
-- **Run**: `flutter run -d chrome` (web only — no Android/iOS emulator configured)
+- **Run on Android emulator**: `flutter emulators --launch MealtionPixel` then `flutter run`
+- **Run on Chrome**: `flutter run -d chrome`
+- **Build web**: `flutter build web --debug`
+- **Emulator**: `MealtionPixel` (Pixel 7, Android API 36, google_apis x86_64)

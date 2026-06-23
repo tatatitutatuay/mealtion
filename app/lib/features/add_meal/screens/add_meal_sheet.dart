@@ -167,7 +167,8 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
-          return Column(
+          return Scaffold(
+            body: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -315,6 +316,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                 ),
               ),
             ],
+          ),
           );
         },
       ),
