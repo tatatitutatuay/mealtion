@@ -4,6 +4,7 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/shadows.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../models/home_data.dart';
+import 'meal_detail_sheet.dart';
 
 class RecentEntries extends StatelessWidget {
   final List<HomeMealEntry> meals;
@@ -21,15 +22,17 @@ class RecentEntries extends StatelessWidget {
           const SizedBox(height: 12),
           ...meals.map((meal) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _mealCard(meal),
+            child: _mealCard(context, meal),
           )),
         ],
       ),
     );
   }
 
-  Widget _mealCard(HomeMealEntry meal) {
-    return Container(
+  Widget _mealCard(BuildContext context, HomeMealEntry meal) {
+    return GestureDetector(
+      onTap: () => MealDetailSheet.show(context, meal.id),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
@@ -91,6 +94,7 @@ class RecentEntries extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

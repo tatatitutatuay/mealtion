@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import '../providers/meal_detail_provider.dart';
+import 'meal_detail_sheet.dart';
 
-class CalendarWidget extends StatefulWidget {
+class CalendarWidget extends ConsumerStatefulWidget {
   final List<DateTime> mealDates;
 
   const CalendarWidget({super.key, required this.mealDates});
 
   @override
-  State<CalendarWidget> createState() => _CalendarWidgetState();
+  ConsumerState<CalendarWidget> createState() => _CalendarWidgetState();
 }
 
-class _CalendarWidgetState extends State<CalendarWidget> {
+class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   late DateTime _currentMonth;
 
   @override
@@ -24,6 +27,13 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
   void _prevMonth() => setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1));
   void _nextMonth() => setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1));
+
+  void _openMealsForDate(DateTime date) async {
+    final meals = await ref.read(mealsByDateProvider(date).future);
+    if (!mounted) return;
+    if (meals.isEmpty) return;
+    MealDetailSheet.showMultiple(context, meals.map((m) => m.id).toList());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +89,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                   date.month == DateTime.now().month &&
                   date.day == DateTime.now().day;
 
-              return Center(
+              return GestureDetector(
+                onTap: hasMeal ? () => _openMealsForDate(date) : null,
+                child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -109,6 +121,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                         ),
                       ),
                   ],
+                ),
                 ),
               );
             },

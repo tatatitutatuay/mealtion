@@ -8,6 +8,7 @@ import '../models/friends_models.dart';
 import '../providers/friends_providers.dart';
 import '../providers/engagement_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../home/widgets/meal_detail_sheet.dart';
 import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
 
@@ -173,7 +174,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ],
             ),
           ),
-          ClipRRect(
+          GestureDetector(
+            onTap: () => MealDetailSheet.show(context, post.id, canEdit: false),
+            child: ClipRRect(
             borderRadius: BorderRadius.circular(0),
             child: Container(
               height: 200,
@@ -182,6 +185,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               child: post.thumbnailUrl != null
                   ? Image.network(post.thumbnailUrl!, fit: BoxFit.cover)
                   : const Icon(Icons.restaurant, size: 48, color: AppColors.grey500),
+            ),
             ),
           ),
           Padding(
