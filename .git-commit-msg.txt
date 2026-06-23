@@ -1,8 +1,9 @@
-fix: router refresh on auth state change
+docs: update plan + AGENTS.md with current state
 
-- Add _AuthRefreshListenable to trigger GoRouter redirect when authProvider changes
-- Onboarding "Get Started" now redirects to home after profile update
-- Debug prints in onboarding _finish() to trace save flow
+- Plan doc: mark phases 8-11.5 as done, add status summary
+- AGENTS.md: add feature architecture section + known gaps
+- Remaining: meal edit mode, profile photo, restaurant search,
+  calendar filters, drafts, tag autocomplete, price level calc
 
 Generated with [Devin](https://devin.ai)
 

@@ -79,3 +79,23 @@ $env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 - **Key gotcha**: Kotlin incremental compilation must be disabled (`kotlin.incremental=false` in `gradle.properties`) because pub cache (C:) and project (D:) are on different drives
 - **Profile auto-creation**: `authInitProvider` upserts a profile row on auth state change (no DB trigger needed)
 - **Photo URLs**: `meal_photos.storage_path` stores the full public URL from `getPublicUrl()`, not the raw storage path
+
+## 7. Feature Architecture
+
+- **Onboarding**: 5-step flow in single `OnboardingScreen`. AuthGuard redirects to `/onboarding` if `profiles.onboarding_completed=false`. Router uses `_AuthRefreshListenable` to trigger redirect on auth state change.
+- **Meal Detail**: `MealDetailSheet` — DraggableScrollableSheet with PageView photo carousel. Supports vertical swipe between meals (calendar mode via `mealIds` list). Bookmark + delete actions in header.
+- **Notifications**: `notificationsProvider` fetches with actor join. `unreadNotificationCountProvider` wired to GreetingBar badge. Tap marks as read + opens meal detail if `meal_id` present.
+- **Friend Requests**: `FriendRequestsScreen` with Received/Sent tabs. `acceptFriendRequest` creates reciprocal row. `cancelSentRequest` deletes pending row.
+- **Friend Profiles**: `FriendProfileScreen` uses `userProfileDataProvider` (parameterized) + `userGalleryProvider` (public meals only). Reuses gallery timeline/grid layout.
+- **Settings**: `SettingsScreen` — currency, price privacy, notification toggles, account deletion (cascades via profile delete), logout.
+- **Bookmark Actions**: `BookmarkActions` provider (createCollection, addMealToCollection, removeMealFromCollection). Collection selector bottom sheet in meal detail.
+
+## 8. Known Gaps (Post-Implementation)
+
+- **Meal edit mode**: `updateMeal` API exists but AddMealSheet doesn't support edit mode yet (needs photo URL→File download)
+- **Profile photo upload**: No image picker in edit profile yet
+- **Restaurant search**: Widget exists but no autocomplete from DB
+- **Calendar filters**: "Health" dropdown is visual only, no actual filtering
+- **Draft meals**: Not implemented (discard dialog only)
+- **Tag autocomplete**: No suggestions from existing tags
+- **Price level calc**: No auto-calculation from thresholds

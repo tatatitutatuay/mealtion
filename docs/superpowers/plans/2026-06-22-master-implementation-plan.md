@@ -1,9 +1,15 @@
 # Mealtion — Master Implementation Plan
 
-Updated: 2026-06-23 (post-audit)
+Updated: 2026-06-23 (post-audit, post-implementation)
 Reference: `Mealtion Document.md` (MVP spec), `2026-06-21-mealtion-architecture-design.md`
 Figma: UI Design page (1:3), Design System page (0:1)
 Figma file: `AajKYbyFqmK1lJuNvFHcgP`
+
+## Status Summary
+
+**Completed phases:** 0 (Foundation), 1 (Theme), 2 (Home), 3 (Add Meal), 4 (Friends), 5 (Profile), 6 (Gallery), 7 (Bookmarks), 8 (Notifications), 9 (Settings), 10 (Onboarding), 11.1 (Meal Detail), 11.2 (Meal Delete — partial), 11.3 (Friend Requests), 11.4 (Friend Profiles), 11.5 (Bookmark Actions — partial)
+
+**Remaining:** 11.2.1/11.2.5 (Meal edit mode), 11.3.6 (Unread badge), 11.4.5 (View Profile button), 11.5.5-11.5.6 (Collection edit/select), 11.6 (Profile photo upload), 11.7 (Restaurant search), 11.8 (Calendar filters), 11.9 (Drafts), 11.10 (Tag autocomplete), 11.11 (Price level calc)
 
 ---
 
@@ -136,41 +142,41 @@ Figma file: `AajKYbyFqmK1lJuNvFHcgP`
 
 ---
 
-## Phase 8: Notifications (Not started)
+## Phase 8: Notifications (DONE)
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 8.1 | Notification provider (fetch from Supabase) | High | `features/notifications/providers/notifications_provider.dart` |
-| 8.2 | Notification list screen (friend requests, likes, comments) | High | `features/notifications/screens/notifications_screen.dart` |
-| 8.3 | Mark as read functionality | Medium | `features/notifications/providers/notifications_provider.dart` |
-| 8.4 | Wire bell icon badge count to greeting bar | High | `features/home/widgets/greeting_bar.dart` |
+| 8.1 | Notification provider (fetch from Supabase) | [x] | `features/notifications/providers/notifications_provider.dart` |
+| 8.2 | Notification list screen (friend requests, likes, comments) | [x] | `features/notifications/screens/notifications_screen.dart` |
+| 8.3 | Mark as read functionality | [x] | `features/notifications/screens/notifications_screen.dart` |
+| 8.4 | Wire bell icon badge count to greeting bar | [x] | `features/home/screens/home_screen.dart` |
 
 ---
 
-## Phase 9: Settings (Not started)
+## Phase 9: Settings (DONE)
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 9.1 | Settings screen (currency, price privacy, notification prefs) | Medium | `features/profile/screens/settings_screen.dart` |
-| 9.2 | Account deletion with password confirmation | Medium | `features/profile/screens/settings_screen.dart` |
-| 9.3 | Wire Settings button in profile screen | Medium | `features/home/screens/profile_screen.dart` |
+| 9.1 | Settings screen (currency, price privacy, notification prefs) | [x] | `features/profile/screens/settings_screen.dart` |
+| 9.2 | Account deletion with confirmation | [x] | `features/profile/screens/settings_screen.dart` |
+| 9.3 | Wire Settings button in profile screen | [x] | `features/home/screens/profile_screen.dart` |
 
 ---
 
-## Phase 10: Onboarding (Not started — CRITICAL)
+## Phase 10: Onboarding (DONE)
 
 5-step onboarding flow after email verification (MVP spec §4).
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 10.1 | Onboarding provider + state management | High | `features/auth/providers/onboarding_provider.dart` |
-| 10.2 | Step 1: Profile Identity (display name, username) | High | `features/auth/screens/onboarding_profile_screen.dart` |
-| 10.3 | Step 2: Profile Info (photo upload, bio) | High | `features/auth/screens/onboarding_info_screen.dart` |
-| 10.4 | Step 3: Currency selection | High | `features/auth/screens/onboarding_currency_screen.dart` |
-| 10.5 | Step 4: Price thresholds (two values) | High | `features/auth/screens/onboarding_thresholds_screen.dart` |
-| 10.6 | Step 5: Permissions (photo library, camera, notifications) | Medium | `features/auth/screens/onboarding_permissions_screen.dart` |
-| 10.7 | Update AuthGuard to redirect to onboarding if not completed | High | `core/router/auth_guard.dart` |
-| 10.8 | Add `onboarding_completed` + `currency` + `price_threshold_low` + `price_threshold_high` columns to profiles table | High | `supabase/migrations/` |
+| 10.1 | Onboarding screen with 5 steps (single screen) | [x] | `features/auth/screens/onboarding_screen.dart` |
+| 10.2 | Step 1: Profile Identity (display name, username) | [x] | — |
+| 10.3 | Step 2: Profile Info (bio) | [x] | — |
+| 10.4 | Step 3: Currency selection | [x] | — |
+| 10.5 | Step 4: Price thresholds | [x] | — |
+| 10.6 | Step 5: Permissions | [x] | — |
+| 10.7 | AuthGuard redirects to /onboarding if not completed | [x] | `core/router/auth_guard.dart` |
+| 10.8 | Router refreshListenable triggers redirect on auth state change | [x] | `core/router/app_router.dart` |
 
 ---
 
@@ -178,61 +184,59 @@ Figma file: `AajKYbyFqmK1lJuNvFHcgP`
 
 Gaps identified by comparing Figma designs + spec against running app.
 
-### 11.1 Meal Detail Popup (CRITICAL — used everywhere)
+### 11.1 Meal Detail Popup (DONE)
 
-Reusable meal detail modal. Tapped from calendar, gallery, friends feed, bookmarks.
-
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 11.1.1 | Create meal detail provider (fetch single meal with photos, foods, restaurant, tags) | High | `features/home/providers/meal_detail_provider.dart` |
-| 11.1.2 | Build meal detail bottom sheet (photo carousel with PageView + dot indicators, meal info, edit button) | High | `features/home/widgets/meal_detail_sheet.dart` |
-| 11.1.3 | Wire tap handlers: gallery timeline cards → meal detail | High | `features/home/screens/gallery_screen.dart` |
-| 11.1.4 | Wire tap handlers: gallery grid items → meal detail | High | `features/home/screens/gallery_screen.dart` |
-| 11.1.5 | Wire tap handlers: friends feed posts → meal detail | High | `features/friends/screens/friends_screen.dart` |
-| 11.1.6 | Wire tap handlers: recent entries → meal detail | High | `features/home/widgets/recent_entries.dart` |
-| 11.1.7 | Calendar date tap → meal detail with vertical swipe (PageView vertical between meals of same date) | High | `features/home/widgets/calendar_widget.dart` |
+| 11.1.1 | Meal detail provider (single meal + meals by date) | [x] | `features/home/providers/meal_detail_provider.dart` |
+| 11.1.2 | Meal detail bottom sheet (photo carousel + vertical swipe) | [x] | `features/home/widgets/meal_detail_sheet.dart` |
+| 11.1.3 | Gallery timeline cards → meal detail | [x] | `features/home/screens/gallery_screen.dart` |
+| 11.1.4 | Gallery grid items → meal detail | [x] | `features/home/screens/gallery_screen.dart` |
+| 11.1.5 | Friends feed posts → meal detail | [x] | `features/friends/screens/friends_screen.dart` |
+| 11.1.6 | Recent entries → meal detail | [x] | `features/home/widgets/recent_entries.dart` |
+| 11.1.7 | Calendar date tap → meal detail with vertical swipe | [x] | `features/home/widgets/calendar_widget.dart` |
 
-### 11.2 Meal Edit + Delete (CRITICAL)
+### 11.2 Meal Edit + Delete (PARTIAL)
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 11.2.1 | Add edit mode to AddMealSheet (accept optional mealId, pre-fill state) | High | `features/add_meal/screens/add_meal_sheet.dart` |
-| 11.2.2 | Add updateMeal method to MealApi (update meal row + replace photos + foods + tags) | High | `features/add_meal/providers/meal_api_provider.dart` |
-| 11.2.3 | Add deleteMeal method to MealApi (delete meal + cascade) | High | `features/add_meal/providers/meal_api_provider.dart` |
-| 11.2.4 | Delete confirmation dialog | High | `features/home/widgets/meal_detail_sheet.dart` |
-| 11.2.5 | Wire edit button in meal detail → open AddMealSheet in edit mode | High | `features/home/widgets/meal_detail_sheet.dart` |
+| 11.2.1 | Add edit mode to AddMealSheet (accept optional mealId) | [ ] | `features/add_meal/screens/add_meal_sheet.dart` |
+| 11.2.2 | updateMeal method in MealApi | [x] | `features/add_meal/providers/meal_api_provider.dart` |
+| 11.2.3 | deleteMeal method in MealApi | [x] | `features/add_meal/providers/meal_api_provider.dart` |
+| 11.2.4 | Delete confirmation dialog | [x] | `features/home/widgets/meal_detail_sheet.dart` |
+| 11.2.5 | Wire edit button → AddMealSheet edit mode | [ ] | Needs photo URL→File handling |
 
-### 11.3 Friend Request Management (CRITICAL)
+### 11.3 Friend Request Management (DONE)
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 11.3.1 | Friend requests provider (fetch received + sent pending) | High | `features/friends/providers/friends_providers.dart` |
-| 11.3.2 | Friend requests screen with two tabs (Received, Sent) | High | `features/friends/screens/friend_requests_screen.dart` |
-| 11.3.3 | Accept/reject received request actions | High | `features/friends/providers/friends_providers.dart` |
-| 11.3.4 | Cancel sent request action | High | `features/friends/providers/friends_providers.dart` |
-| 11.3.5 | Wire friend requests button in friends screen | High | `features/friends/screens/friends_screen.dart` |
-| 11.3.6 | Unread badge on Add Friend icon | Medium | `features/friends/screens/friends_screen.dart` |
+| 11.3.1 | Friend requests provider (received + sent) | [x] | `features/friends/providers/friends_providers.dart` |
+| 11.3.2 | Friend requests screen (Received/Sent tabs) | [x] | `features/friends/screens/friend_requests_screen.dart` |
+| 11.3.3 | Accept/reject received requests | [x] | `features/friends/providers/friends_providers.dart` |
+| 11.3.4 | Cancel sent request | [x] | `features/friends/providers/friends_providers.dart` |
+| 11.3.5 | Friend requests button in friends screen | [x] | `features/friends/screens/friends_screen.dart` |
+| 11.3.6 | Unread badge on Add Friend icon | [ ] | `features/friends/screens/friends_screen.dart` |
 
-### 11.4 Friend Profile Viewing (CRITICAL)
+### 11.4 Friend Profile Viewing (DONE)
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 11.4.1 | Profile statistics provider (meals count, foods count, places count, friends count) | High | `features/friends/providers/profile_provider.dart` |
-| 11.4.2 | Friend profile screen (header + stats + timeline/grid + month nav) | High | `features/friends/screens/friend_profile_screen.dart` |
-| 11.4.3 | Reuse gallery provider for friend's meals (parameterized by user_id) | High | `features/home/providers/gallery_provider.dart` |
-| 11.4.4 | Wire friend list tap → friend profile | High | `features/friends/screens/friends_screen.dart` |
-| 11.4.5 | Wire "View Profile" button in own profile | Medium | `features/home/screens/profile_screen.dart` |
+| 11.4.1 | Profile statistics provider | [x] | `features/friends/providers/profile_provider.dart` |
+| 11.4.2 | Friend profile screen (header + stats + timeline/grid) | [x] | `features/friends/screens/friend_profile_screen.dart` |
+| 11.4.3 | Parameterized gallery provider (userGalleryProvider) | [x] | `features/home/providers/gallery_provider.dart` |
+| 11.4.4 | Friend list tap → friend profile | [x] | `features/friends/screens/friends_screen.dart` |
+| 11.4.5 | Wire "View Profile" button in own profile | [ ] | `features/home/screens/profile_screen.dart` |
 
-### 11.5 Bookmark Actions (HIGH)
+### 11.5 Bookmark Actions (PARTIAL)
 
-| # | Task | Priority | Files |
+| # | Task | Status | Files |
 |---|---|---|---|
-| 11.5.1 | Bookmark action provider (save meal to collection, remove from collection) | High | `features/bookmarks/providers/bookmark_provider.dart` |
-| 11.5.2 | Create collection dialog (name + cover image) | High | `features/bookmarks/widgets/create_collection_dialog.dart` |
-| 11.5.3 | Collection selector bottom sheet (pick collection when bookmarking a meal) | High | `features/bookmarks/widgets/collection_selector.dart` |
-| 11.5.4 | Wire bookmark icon on meal detail → collection selector | High | `features/home/widgets/meal_detail_sheet.dart` |
-| 11.5.5 | Edit collection name functionality | Medium | `features/bookmarks/screens/custom_collection_detail_screen.dart` |
-| 11.5.6 | Select items mode (multi-select + delete from collection) | Medium | `features/bookmarks/screens/custom_collection_detail_screen.dart` |
+| 11.5.1 | Bookmark action provider (add/remove meal) | [x] | `features/bookmarks/providers/bookmark_provider.dart` |
+| 11.5.2 | Create collection dialog | [x] | `features/home/widgets/meal_detail_sheet.dart` |
+| 11.5.3 | Collection selector bottom sheet | [x] | `features/home/widgets/meal_detail_sheet.dart` |
+| 11.5.4 | Bookmark icon on meal detail → collection selector | [x] | `features/home/widgets/meal_detail_sheet.dart` |
+| 11.5.5 | Edit collection name | [ ] | `features/bookmarks/screens/custom_collection_detail_screen.dart` |
+| 11.5.6 | Select items mode (multi-select + delete) | [ ] | `features/bookmarks/screens/custom_collection_detail_screen.dart` |
 
 ### 11.6 Profile Photo Upload (MEDIUM)
 
@@ -287,23 +291,17 @@ Reusable meal detail modal. Tapped from calendar, gallery, friends feed, bookmar
 ## Critical Path (Updated)
 
 ```
-Phase 11.1 (Meal Detail Popup) → Phase 11.2 (Meal Edit/Delete) → Phase 10 (Onboarding) → Phase 8 (Notifications) → Phase 11.3 (Friend Requests) → Phase 11.4 (Friend Profiles) → Phase 9 (Settings) → Phase 11.5 (Bookmark Actions)
+[DONE] 11.1 Meal Detail → [DONE] 11.2 Meal Delete → [DONE] 10 Onboarding → [DONE] 8 Notifications → [DONE] 11.3 Friend Requests → [DONE] 11.4 Friend Profiles → [DONE] 9 Settings → [DONE] 11.5 Bookmark Actions
 ```
 
-**Why this order:**
-1. **Meal Detail Popup** first — single highest-leverage feature, used in 4+ screens
-2. **Meal Edit/Delete** — extends Add Meal sheet, depends on meal detail for trigger
-3. **Onboarding** — blocks new users from being useful (currency + thresholds needed)
-4. **Notifications** — needed for social features to function
-5. **Friend Requests** — completes friends loop
-6. **Friend Profiles** — extends profile, reuses gallery components
-7. **Settings** — currency, account deletion
-8. **Bookmark Actions** — wire up bookmark icon, depends on meal detail for trigger
-
-**Parallel tracks (can be done anytime):**
-- Phase 11.6 (Profile Photo Upload)
-- Phase 11.7 (Restaurant Search)
-- Phase 11.8 (Calendar Filters)
-- Phase 11.9 (Drafts)
-- Phase 11.10 (Tag Autocomplete)
-- Phase 11.11 (Price Level)
+**Remaining work (priority order):**
+1. 11.2.1/11.2.5 — Meal edit mode (needs photo URL→File download)
+2. 11.6 — Profile photo upload (image picker + avatars bucket)
+3. 11.7 — Restaurant search autocomplete
+4. 11.8 — Calendar indicator filters
+5. 11.9 — Draft meals (local storage)
+6. 11.10 — Tag autocomplete
+7. 11.11 — Price level calculation
+8. 11.3.6 — Unread badge on Add Friend icon
+9. 11.4.5 — View Profile button in own profile
+10. 11.5.5-11.5.6 — Collection edit/select mode
