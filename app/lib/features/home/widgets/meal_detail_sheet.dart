@@ -6,6 +6,7 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/meal_detail_provider.dart';
 import '../../add_meal/providers/meal_api_provider.dart';
+import '../../bookmarks/providers/bookmark_provider.dart';
 
 /// Meal detail bottom sheet.
 /// [mealIds] supports vertical swipe between meals (calendar mode).
@@ -122,13 +123,16 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  onPressed: () => _showCollectionSelector(widget.mealIds[_currentIndex]),
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete_outline, color: AppColors.error),
                   onPressed: () => _confirmDelete(widget.mealIds[_currentIndex]),
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   onPressed: () {
-                    // Edit mode — TODO: requires photo URL→File handling
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Edit coming soon')),
                     );
@@ -136,10 +140,56 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
                 ),
               ],
             ),
-          if (!widget.canEdit) const SizedBox(width: 48),
+          if (!widget.canEdit)
+            IconButton(
+              icon: const Icon(Icons.bookmark_add_outlined),
+              onPressed: () => _showCollectionSelector(widget.mealIds[_currentIndex]),
+            ),
         ],
       ),
     );
+  }
+
+  void _showCollectionSelector(String mealId) async {
+    final collections = ref.read(bookmarkCollectionsProvider).valueOrNull ?? [];
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _CollectionSelectorSheet(
+        collections: collections,
+        onCreate: () async {
+          final name = await showDialog<String>(
+            context: ctx,
+            builder: (dctx) => _CreateCollectionDialog(),
+          );
+          return name;
+        },
+      ),
+    );
+
+    if (selected == null || !mounted) return;
+
+    String collectionId = selected;
+    if (collectionId == '__new__') {
+      // Already handled in sheet — get the new ID
+      return;
+    }
+
+    try {
+      await ref.read(bookmarkActionsProvider).addMealToCollection(collectionId, mealId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to collection')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e')),
+        );
+      }
+    }
   }
 
   void _confirmDelete(String mealId) async {
@@ -387,4 +437,89 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
       };
 
   String _capitalize(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+}
+
+class _CollectionSelectorSheet extends ConsumerWidget {
+  final List<BookmarkCollection> collections;
+  final Future<String?> Function() onCreate;
+
+  const _CollectionSelectorSheet({required this.collections, required this.onCreate});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Save to collection', style: AppTypography.s2),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.add, color: AppColors.primary),
+            title: Text('New Collection', style: AppTypography.b3.copyWith(color: AppColors.primary)),
+            onTap: () async {
+              final name = await onCreate();
+              if (name == null || !context.mounted) return;
+              try {
+                final id = await ref.read(bookmarkActionsProvider).createCollection(name);
+                if (context.mounted) Navigator.pop(context, id);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                }
+              }
+            },
+          ),
+          const Divider(height: 1),
+          ...collections.map((c) => ListTile(
+                leading: const Icon(Icons.bookmark_outline),
+                title: Text(c.name),
+                subtitle: Text('${c.itemCount} items'),
+                onTap: () => Navigator.pop(context, c.id),
+              )),
+          if (collections.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('No collections yet. Create one!', style: AppTypography.b4),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreateCollectionDialog extends StatefulWidget {
+  @override
+  State<_CreateCollectionDialog> createState() => _CreateCollectionDialogState();
+}
+
+class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('New Collection'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(hintText: 'Collection name'),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Create'),
+        ),
+      ],
+    );
+  }
 }

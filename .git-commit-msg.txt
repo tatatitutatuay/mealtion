@@ -1,11 +1,9 @@
-feat: settings screen
+feat: bookmark actions — save meal to collection
 
-- Currency selection (saved to profiles table)
-- Price display privacy (actual/level/hidden)
-- Notification preferences toggles
-- Account deletion with confirmation (cascades profile + all data)
-- Logout
-- Settings icon in profile screen AppBar
+- Bookmark icon in meal detail sheet header (own + friend meals)
+- Collection selector bottom sheet with existing collections
+- Create new collection dialog from selector
+- Uses existing BookmarkActions provider (addMealToCollection)
 
 Generated with [Devin](https://devin.ai)
 
