@@ -68,3 +68,14 @@ $env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 - **Run on Chrome**: `flutter run -d chrome`
 - **Build web**: `flutter build web --debug`
 - **Emulator**: `MealtionPixel` (Pixel 7, Android API 36, google_apis x86_64)
+
+## 6. Supabase
+
+- **Project URL**: `https://ssiaxokyvoqxroaavurx.supabase.co`
+- **Dashboard**: https://supabase.com/dashboard/project/ssiaxokyvoqxroaavurx
+- **SQL Editor**: Dashboard → SQL Editor (run schema/RLS changes here)
+- **Storage bucket**: `meal-photos` (public, owner-only upload/delete via RLS)
+- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies)
+- **Key gotcha**: Kotlin incremental compilation must be disabled (`kotlin.incremental=false` in `gradle.properties`) because pub cache (C:) and project (D:) are on different drives
+- **Profile auto-creation**: `authInitProvider` upserts a profile row on auth state change (no DB trigger needed)
+- **Photo URLs**: `meal_photos.storage_path` stores the full public URL from `getPublicUrl()`, not the raw storage path

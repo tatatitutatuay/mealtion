@@ -24,9 +24,12 @@ RETURNS BOOLEAN LANGUAGE SQL SECURITY DEFINER AS $$
   );
 $$;
 
--- Profiles: read own, update own, insert via trigger
+-- Profiles: read own, update own, insert own
 CREATE POLICY "profiles_select_own" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "profiles_insert_own" ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "profiles_update_own" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
@@ -63,9 +66,30 @@ CREATE POLICY "meal_foods_select" ON public.meal_foods
     EXISTS (SELECT 1 FROM public.meals WHERE id = meal_id AND (user_id = auth.uid() OR (is_private = FALSE AND public.are_friends(auth.uid(), user_id))))
   );
 
+CREATE POLICY "meal_foods_insert" ON public.meal_foods
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.meals WHERE id = meal_id AND user_id = auth.uid())
+  );
+
 CREATE POLICY "meal_photos_select" ON public.meal_photos
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.meals WHERE id = meal_id AND (user_id = auth.uid() OR (is_private = FALSE AND public.are_friends(auth.uid(), user_id))))
+  );
+
+CREATE POLICY "meal_photos_insert" ON public.meal_photos
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.meals WHERE id = meal_id AND user_id = auth.uid())
+  );
+
+-- Meal tags
+CREATE POLICY "meal_tags_select" ON public.meal_tags
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.meals WHERE id = meal_id AND (user_id = auth.uid() OR (is_private = FALSE AND public.are_friends(auth.uid(), user_id))))
+  );
+
+CREATE POLICY "meal_tags_insert" ON public.meal_tags
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.meals WHERE id = meal_id AND user_id = auth.uid())
   );
 
 -- Friends: involved users only
@@ -136,6 +160,17 @@ CREATE POLICY "notifications_select" ON public.notifications
 CREATE POLICY "notifications_update" ON public.notifications
   FOR UPDATE USING (auth.uid() = user_id);
 
--- Storage bucket RLS (executed in Supabase dashboard or via SQL)
--- INSERT: only meal owner can upload
--- SELECT: meal owner or friend can view
+-- Storage bucket: meal-photos (public bucket, owner-only upload/delete)
+-- Bucket must be created first: INSERT INTO storage.buckets (id, name, public) VALUES ('meal-photos', 'meal-photos', true);
+CREATE POLICY "meal_photos_upload_own" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (
+    bucket_id = 'meal-photos' AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "meal_photos_read" ON storage.objects
+  FOR SELECT USING (bucket_id = 'meal-photos');
+
+CREATE POLICY "meal_photos_delete_own" ON storage.objects
+  FOR DELETE TO authenticated USING (
+    bucket_id = 'meal-photos' AND (storage.foldername(name))[1] = auth.uid()::text
+  );

@@ -156,3 +156,6 @@ CREATE INDEX idx_likes_meal_id ON public.likes(meal_id);
 CREATE INDEX idx_comments_meal_id ON public.comments(meal_id);
 CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX idx_notifications_is_read ON public.notifications(is_read);
+
+-- Storage bucket for meal photos (public, RLS controls upload/delete)
+INSERT INTO storage.buckets (id, name, public) VALUES ('meal-photos', 'meal-photos', true);

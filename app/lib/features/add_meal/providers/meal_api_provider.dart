@@ -79,9 +79,10 @@ class MealApi {
       final ext = photo.file.path.split('.').last;
       final storagePath = '$userId/$mealId/$i.$ext';
       await _supabase.storage.from('meal-photos').upload(storagePath, photo.file);
+      final publicUrl = _supabase.storage.from('meal-photos').getPublicUrl(storagePath);
       await _supabase.from('meal_photos').insert({
         'meal_id': mealId,
-        'storage_path': storagePath,
+        'storage_path': publicUrl,
         'sort_order': i,
       });
     }
