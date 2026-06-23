@@ -1,8 +1,9 @@
 # Mealtion — Master Implementation Plan
 
-Updated: 2026-06-22
+Updated: 2026-06-23
 Reference: `Mealtion Document.md` (MVP spec), `2026-06-21-mealtion-architecture-design.md`
 Figma: UI Design page (1:3), Design System page (0:1)
+Figma file: `AajKYbyFqmK1lJuNvFHcgP`
 
 ---
 
@@ -56,9 +57,10 @@ Build the full home screen matching the Figma design.
 
 ---
 
-## Phase 3: Add Meal — Test & Ship
+## Phase 3: Add Meal — Test & Ship (Figma 3-1)
 
 Add Meal is fully coded but untested. Need to run migrations and verify.
+Figma 3-1 (node 98:5844) shows the full form: photo upload, date, time, meal name, source, tags, restaurant, branch, price, price indicator, heaviness, feeling.
 
 | # | Task | Priority | Files |
 |---|---|---|---|
@@ -81,7 +83,7 @@ Add Meal is fully coded but untested. Need to run migrations and verify.
 | 4.1.2 | Create feed provider: fetch friend meals from Supabase with pagination (20 per batch) | High | `features/friends/providers/feed_provider.dart` |
 | 4.1.3 | Build Feed tab in friends screen with infinite scroll | High | `features/friends/screens/feed_screen.dart` |
 | 4.1.4 | Implement like action (heart toggle + count) | Medium | `features/friends/providers/like_provider.dart` |
-| 4.1.5 | Implement comment UI (list + add) | Medium | `features/friends/widgets/comment_section.dart` |
+| 4.1.5 | Implement comment bottom sheet (Figma 2-2: drag handle, comment list with avatar+name+time, input bar) | Medium | `features/friends/widgets/comment_sheet.dart` |
 | 4.1.6 | Build feed detail screen (tap post) | Low | `features/friends/screens/feed_detail_screen.dart` |
 
 ### 4.2 Friends List (Figma 2-3)
@@ -117,25 +119,73 @@ Add Meal is fully coded but untested. Need to run migrations and verify.
 
 ---
 
-## Phase 6: Gallery (Figma — MVP spec §20)
+## Phase 6: Gallery (Figma 4-1, 4-2, 4-3 — MVP spec §18-19)
+
+Gallery is Bottom Nav item 4. Figma section 4 includes Gallery + Bookmarks as one flow (bookmark icon in Gallery header → Bookmark collections).
+
+### 6.1 Gallery Timeline (Figma 4-1, node 98:7908)
 
 | # | Task | Priority | Files |
 |---|---|---|---|
-| 6.1 | Build gallery provider: fetch all user meals with photos | High | `features/gallery/providers/gallery_provider.dart` |
-| 6.2 | Implement Grid view (3-column photo grid) | High | `features/gallery/screens/gallery_grid.dart` |
-| 6.3 | Implement Timeline view (chronological list) | Medium | `features/gallery/screens/gallery_timeline.dart` |
-| 6.4 | Add view toggle (Grid/Timeline) | Medium | `features/gallery/widgets/view_toggle.dart` |
-| 6.5 | Add search/filter by food name, restaurant, tag | Medium | `features/gallery/providers/` |
+| 6.1.1 | Build gallery provider: fetch user meals by month from Supabase | High | `features/gallery/providers/gallery_provider.dart` |
+| 6.1.2 | Gallery header: "Gallery" title + bookmark icon (navigates to Phase 7) | High | `features/gallery/widgets/gallery_header.dart` |
+| 6.1.3 | Search bar ("Search meal") — taps to open search mode (6.3) | High | `features/gallery/widgets/gallery_search_bar.dart` |
+| 6.1.4 | Month navigation (arrows + month/year label, taps for month picker popup) | High | `features/gallery/widgets/month_nav.dart` |
+| 6.1.5 | Timeline/Grid view toggle (align-justify vs table icons) | Medium | `features/gallery/widgets/view_toggle.dart` |
+| 6.1.6 | Timeline list: date labels with vertical line, meal cards (photo, name, restaurant+branch, price chip, heaviness chip, feeling chip, bookmark icon) | High | `features/gallery/widgets/timeline_meal_card.dart` |
+| 6.1.7 | Empty state when no meals in selected month | Medium | `features/gallery/screens/gallery_screen.dart` |
+
+### 6.2 Gallery Grid (Figma 4-2, node 111:10321)
+
+| # | Task | Priority | Files |
+|---|---|---|---|
+| 6.2.1 | 3-column photo grid (square ~105px thumbnails, rounded corners) | High | `features/gallery/widgets/photo_grid.dart` |
+| 6.2.2 | Multi-photo indicator icon on grid items | Medium | `features/gallery/widgets/photo_grid.dart` |
+| 6.2.3 | Tap grid item → open Meal Popup (left/right photo nav only, no vertical) | High | `features/gallery/screens/gallery_screen.dart` |
+
+### 6.3 Gallery Search (Figma 4-3, node 111:10654)
+
+| # | Task | Priority | Files |
+|---|---|---|---|
+| 6.3.1 | Search mode: back arrow + search bar (no Gallery title/month nav) | High | `features/gallery/screens/gallery_search_screen.dart` |
+| 6.3.2 | Search provider: partial text match on food name, restaurant, branch, tags | High | `features/gallery/providers/search_provider.dart` |
+| 6.3.3 | Results: 3-column photo grid, newest first | High | `features/gallery/widgets/photo_grid.dart` (reuse) |
 
 ---
 
-## Phase 7: Bookmarks (MVP spec §21-23)
+## Phase 7: Bookmarks (Figma 4-4, 4-5, 4-6 — MVP spec §20-22)
+
+Accessed from bookmark icon in Gallery header. Figma shows 3 screens.
+
+### 7.1 Bookmark Collections List (Figma 4-4, node 111:10896)
 
 | # | Task | Priority | Files |
 |---|---|---|---|
-| 7.1 | Create bookmark provider (Base: Place/Food, Custom Collections) | Low | `features/bookmarks/providers/` |
-| 7.2 | Build bookmark collection list screen | Low | `features/bookmarks/screens/` |
-| 7.3 | Implement add/remove bookmark on meals | Low | `features/bookmarks/providers/` |
+| 7.1.1 | Bookmark provider: fetch Base collections (Place, Food) + Custom collections | High | `features/bookmarks/providers/bookmark_provider.dart` |
+| 7.1.2 | Screen: back arrow + plus icon + "Bookmark" title | High | `features/bookmarks/screens/bookmark_collections_screen.dart` |
+| 7.1.3 | "Base" section: 2 cards (Place, Food) with cover + title + subtitle | High | `features/bookmarks/widgets/base_collection_card.dart` |
+| 7.1.4 | "Your" section: custom collection cards (same layout) | High | `features/bookmarks/widgets/custom_collection_card.dart` |
+| 7.1.5 | Plus icon → create collection dialog (name + cover image) | Medium | `features/bookmarks/widgets/create_collection_dialog.dart` |
+
+### 7.2 Base Bookmark Detail (Figma 4-5, node 111:11190)
+
+| # | Task | Priority | Files |
+|---|---|---|---|
+| 7.2.1 | Screen: back arrow + more-horiz + "Bookmark" title + category label + count | High | `features/bookmarks/screens/base_bookmark_detail_screen.dart` |
+| 7.2.2 | Alphabetical list grouped by first letter (letter headers + divider lines) | High | `features/bookmarks/widgets/alphabetical_list.dart` |
+| 7.2.3 | Each item: thumbnail + name (Place: restaurant+branch, Food: food name) | High | `features/bookmarks/widgets/bookmark_item_row.dart` |
+| 7.2.4 | Tap item → 3-column grid of related meals (reuse photo grid) | Medium | `features/bookmarks/screens/bookmark_meal_grid.dart` |
+| 7.2.5 | More-horiz menu: edit icon (change item icon/photo) | Low | `features/bookmarks/widgets/` |
+
+### 7.3 Custom Collection Detail (Figma 4-6, node 111:11514)
+
+| # | Task | Priority | Files |
+|---|---|---|---|
+| 7.3.1 | Screen: back arrow + more-horiz + "Bookmark" title + collection name + count | High | `features/bookmarks/screens/custom_collection_detail_screen.dart` |
+| 7.3.2 | 3-column photo grid (reuse from gallery), sorted by most recently saved | High | `features/bookmarks/widgets/` (reuse photo grid) |
+| 7.3.3 | More-horiz menu: Edit Collection, Select Items, Remove items, Delete Collection | Medium | `features/bookmarks/widgets/collection_menu.dart` |
+| 7.3.4 | Delete collection confirmation dialog | Medium | `features/bookmarks/widgets/` |
+| 7.3.5 | Add meal to collection: bookmark icon on meal → collection selection popup | Medium | `features/bookmarks/widgets/collection_selector.dart` |
 
 ---
 
@@ -171,11 +221,12 @@ Add Meal is fully coded but untested. Need to run migrations and verify.
 ## Critical Path (Recommended Order)
 
 ```
-Phase 1 (Theme) → Phase 3 (Add Meal) → Phase 2 (Home) → Phase 4 (Friends) → Phase 5 (Profile)
+Phase 1 (Theme) → Phase 3 (Add Meal) → Phase 2 (Home) → Phase 4 (Friends) → Phase 5 (Profile) → Phase 6 (Gallery) → Phase 7 (Bookmarks)
 ```
 
 Phase 1 first because all screens depend on correct colors/typography.
 Phase 3 next because code is already written (just need migrations).
 Phase 2 after because Home is the landing screen.
 Phases 4-5 are the remaining primary tab screens.
-Phases 6-10 are secondary features.
+Phase 6-7 (Gallery + Bookmarks) are the 4th bottom nav tab — one navigation flow in Figma (section 4).
+Phases 8-10 are secondary features.
