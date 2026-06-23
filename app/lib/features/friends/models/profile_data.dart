@@ -7,6 +7,7 @@ class ProfileData {
   final int monthMeals;
   final int monthFoods;
   final int monthRestaurants;
+  final int friendsCount;
 
   ProfileData({
     required this.displayName,
@@ -17,5 +18,6 @@ class ProfileData {
     required this.monthMeals,
     required this.monthFoods,
     required this.monthRestaurants,
+    this.friendsCount = 0,
   });
 }

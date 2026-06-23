@@ -1,9 +1,9 @@
-feat: friend request management
+feat: friend profile screen with stats + gallery
 
-- FriendRequestsScreen with Received/Sent tabs
-- Accept/reject received requests, cancel sent requests
-- Sent requests provider
-- Mail icon in friends screen header → requests screen
+- FriendProfileScreen: header, stats (meals, friends), month nav, timeline/grid
+- userProfileDataProvider: fetch any user's profile + stats
+- userGalleryProvider: parameterized gallery (public meals only)
+- Friend list tap → friend profile screen
 
 Generated with [Devin](https://devin.ai)
 

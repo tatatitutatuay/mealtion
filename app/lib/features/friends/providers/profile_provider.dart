@@ -80,3 +80,43 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
     monthRestaurants: monthRestaurantsCount,
   );
 });
+
+/// Profile data for any user (friend profile view)
+final userProfileDataProvider = FutureProvider.family<ProfileData, String>((ref, userId) async {
+  final supabase = ref.watch(supabaseProvider);
+
+  final profileRows = await supabase
+      .from('profiles')
+      .select('display_name, username, bio, photo_url')
+      .eq('id', userId)
+      .limit(1);
+
+  final profileList = profileRows as List<dynamic>;
+  final profileData = profileList.isNotEmpty
+      ? profileList.first as Map<String, dynamic>
+      : <String, dynamic>{};
+
+  final mealsCount = await supabase
+      .from('meals')
+      .count(CountOption.exact)
+      .eq('user_id', userId)
+      .eq('is_private', false);
+
+  final friendsCount = await supabase
+      .from('friends')
+      .count(CountOption.exact)
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+  return ProfileData(
+    displayName: profileData['display_name'] as String? ?? '',
+    username: profileData['username'] as String?,
+    bio: profileData['bio'] as String?,
+    photoUrl: profileData['photo_url'] as String?,
+    totalMeals: mealsCount,
+    monthMeals: 0,
+    monthFoods: 0,
+    monthRestaurants: 0,
+    friendsCount: friendsCount,
+  );
+});

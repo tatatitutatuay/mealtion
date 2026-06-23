@@ -12,6 +12,7 @@ import '../../home/widgets/meal_detail_sheet.dart';
 import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
 import 'friend_requests_screen.dart';
+import 'friend_profile_screen.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -269,7 +270,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   Widget _friendTile(FriendProfile friend) {
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: friend.id)),
+      ),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -308,6 +313,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             child: Text('Friends', style: AppTypography.c2.copyWith(color: AppColors.primary)),
           ),
         ],
+      ),
       ),
     );
   }
