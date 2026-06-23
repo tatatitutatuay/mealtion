@@ -1,10 +1,9 @@
-feat: meal detail popup with photo carousel + vertical swipe
+feat: meal delete + update API
 
-- MealDetailProvider: fetch single meal + meals by date
-- MealDetailSheet: DraggableScrollableSheet with PageView photo carousel,
-  vertical swipe between meals (calendar mode), edit button
-- Wire tap handlers: gallery grid/timeline, friends feed, recent entries
-- Calendar date tap opens meal detail with vertical swipe
+- Add updateMeal + deleteMeal to MealApi
+- Delete confirmation dialog in meal detail sheet
+- Delete removes photos from storage + meal row (cascades)
+- Edit button placeholder (needs photo URL→File handling)
 
 Generated with [Devin](https://devin.ai)
 

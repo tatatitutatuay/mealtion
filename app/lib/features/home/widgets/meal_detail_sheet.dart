@@ -5,6 +5,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/meal_detail_provider.dart';
+import '../../add_meal/providers/meal_api_provider.dart';
 
 /// Meal detail bottom sheet.
 /// [mealIds] supports vertical swipe between meals (calendar mode).
@@ -117,16 +118,63 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
           if (widget.mealIds.length > 1)
             Text('${_currentIndex + 1} / ${widget.mealIds.length}', style: AppTypography.s2),
           if (widget.canEdit)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () {
-                // Wire to edit mode in Phase 11.2
-              },
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                  onPressed: () => _confirmDelete(widget.mealIds[_currentIndex]),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () {
+                    // Edit mode — TODO: requires photo URL→File handling
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Edit coming soon')),
+                    );
+                  },
+                ),
+              ],
             ),
           if (!widget.canEdit) const SizedBox(width: 48),
         ],
       ),
     );
+  }
+
+  void _confirmDelete(String mealId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete meal?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(mealApiProvider).deleteMeal(mealId);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Meal deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
+      }
+    }
   }
 
   Widget _mealContent(String mealId) {
