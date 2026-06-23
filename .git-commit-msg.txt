@@ -1,9 +1,9 @@
-feat: notifications screen + unread badge
+feat: friend request management
 
-- NotificationItem model + provider (fetch with actor join)
-- NotificationsScreen: list with icons per type, mark as read on tap
-- Unread count provider wired to GreetingBar badge
-- Tap notification with meal_id opens meal detail
+- FriendRequestsScreen with Received/Sent tabs
+- Accept/reject received requests, cancel sent requests
+- Sent requests provider
+- Mail icon in friends screen header → requests screen
 
 Generated with [Devin](https://devin.ai)
 

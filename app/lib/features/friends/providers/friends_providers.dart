@@ -183,3 +183,85 @@ final userProfileProvider = FutureProvider.family<FriendProfile?, String>((ref, 
   if (list.isEmpty) return null;
   return FriendProfile.fromJson(list.first as Map<String, dynamic>);
 });
+
+/// Sent requests (pending requests sent by current user)
+final sentRequestsProvider = FutureProvider<List<FriendProfile>>((ref) async {
+  final auth = ref.watch(authProvider);
+  if (auth == null) return [];
+  final supabase = ref.watch(supabaseProvider);
+
+  final rows = await supabase
+      .from('friends')
+      .select('friend_user_id')
+      .eq('user_id', auth.id)
+      .eq('status', 'pending');
+
+  final targetIds = (rows as List<dynamic>)
+      .cast<Map<String, dynamic>>()
+      .map((r) => r['friend_user_id'] as String)
+      .toList();
+
+  if (targetIds.isEmpty) return [];
+
+  final profileRows = await supabase
+      .from('profiles')
+      .select('id, display_name, username, bio, photo_url')
+      .inFilter('id', targetIds);
+
+  return (profileRows as List<dynamic>)
+      .cast<Map<String, dynamic>>()
+      .map((r) => FriendProfile.fromJson(r))
+      .toList();
+});
+
+/// Accept a friend request (received)
+Future<void> acceptFriendRequest(WidgetRef ref, String requesterId) async {
+  final supabase = ref.read(supabaseProvider);
+  final userId = supabase.auth.currentUser!.id;
+
+  // Update received row to active
+  await supabase
+      .from('friends')
+      .update({'status': 'active'})
+      .eq('user_id', requesterId)
+      .eq('friend_user_id', userId);
+
+  // Create reciprocal row as active
+  await supabase.from('friends').insert({
+    'user_id': userId,
+    'friend_user_id': requesterId,
+    'status': 'active',
+    'action_user_id': userId,
+  });
+
+  ref.invalidate(pendingRequestsProvider);
+  ref.invalidate(friendsListProvider);
+}
+
+/// Reject a friend request (received)
+Future<void> rejectFriendRequest(WidgetRef ref, String requesterId) async {
+  final supabase = ref.read(supabaseProvider);
+  final userId = supabase.auth.currentUser!.id;
+
+  await supabase
+      .from('friends')
+      .delete()
+      .eq('user_id', requesterId)
+      .eq('friend_user_id', userId);
+
+  ref.invalidate(pendingRequestsProvider);
+}
+
+/// Cancel a sent friend request
+Future<void> cancelSentRequest(WidgetRef ref, String targetId) async {
+  final supabase = ref.read(supabaseProvider);
+  final userId = supabase.auth.currentUser!.id;
+
+  await supabase
+      .from('friends')
+      .delete()
+      .eq('user_id', userId)
+      .eq('friend_user_id', targetId);
+
+  ref.invalidate(sentRequestsProvider);
+}

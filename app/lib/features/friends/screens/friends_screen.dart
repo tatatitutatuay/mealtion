@@ -11,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../home/widgets/meal_detail_sheet.dart';
 import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
+import 'friend_requests_screen.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -47,6 +48,12 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       appBar: AppBar(
         title: const Text('Friends'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.mail_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.person_add_outlined),
             onPressed: () => Navigator.of(context).push(
