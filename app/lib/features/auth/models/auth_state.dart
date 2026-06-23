@@ -40,4 +40,20 @@ class AuthState {
       onboardingCompleted: metadata?['onboarding_completed'] as bool? ?? false,
     );
   }
+
+  AuthState copyWith({
+    String? displayName,
+    String? username,
+    String? photoUrl,
+    bool? onboardingCompleted,
+  }) {
+    return AuthState(
+      id: id,
+      email: email,
+      displayName: displayName ?? this.displayName,
+      username: username ?? this.username,
+      photoUrl: photoUrl ?? this.photoUrl,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+    );
+  }
 }

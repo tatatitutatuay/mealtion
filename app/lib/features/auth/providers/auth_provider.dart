@@ -16,24 +16,48 @@ final authInitProvider = Provider<void>((ref) {
     final session = supabase.auth.currentSession;
     if (session != null) {
       await _ensureProfile(supabase, session.user.id);
+      final authState = await _fetchAuthState(supabase, session);
+      ref.read(authProvider.notifier).state = authState;
+    } else {
+      ref.read(authProvider.notifier).state = null;
     }
-    ref.read(authProvider.notifier).state = session != null
-        ? AuthState.fromSession(session)
-        : null;
   });
 
   final sub = supabase.auth.onAuthStateChange.listen((data) async {
     final session = data.session;
     if (session != null) {
       await _ensureProfile(supabase, session.user.id);
+      final authState = await _fetchAuthState(supabase, session);
+      ref.read(authProvider.notifier).state = authState;
+    } else {
+      ref.read(authProvider.notifier).state = null;
     }
-    ref.read(authProvider.notifier).state = session != null
-        ? AuthState.fromSession(session)
-        : null;
   });
 
   ref.onDispose(() => sub.cancel());
 });
+
+/// Fetch full auth state from profiles table
+Future<AuthState> _fetchAuthState(SupabaseClient supabase, Session session) async {
+  try {
+    final profile = await supabase
+        .from('profiles')
+        .select('id, display_name, username, photo_url, onboarding_completed, primary_currency, price_threshold_low, price_threshold_high')
+        .eq('id', session.user.id)
+        .maybeSingle();
+    if (profile != null) {
+      return AuthState(
+        id: session.user.id,
+        email: session.user.email ?? '',
+        displayName: profile['display_name'] as String? ?? '',
+        username: profile['username'] as String?,
+        photoUrl: profile['photo_url'] as String?,
+        onboardingCompleted: profile['onboarding_completed'] as bool? ?? false,
+      );
+    }
+  } catch (_) {}
+  return AuthState.fromSession(session);
+}
 
 /// Insert a profile row if it doesn't exist yet (idempotent).
 Future<void> _ensureProfile(SupabaseClient supabase, String userId) async {
