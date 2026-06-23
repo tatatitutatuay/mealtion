@@ -53,3 +53,14 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## 5. Build & Verify Commands
+
+Flutter is at `D:\flutter\bin`. Always prepend to PATH:
+```powershell
+$env:Path = "D:\flutter\bin;$env:Path"
+```
+
+- **Analyze**: `flutter analyze` (from `app/` directory)
+- **Build web**: `flutter build web --debug` (no Android SDK available; use web to verify compilation)
+- **Run**: `flutter run -d chrome` (web only — no Android/iOS emulator configured)

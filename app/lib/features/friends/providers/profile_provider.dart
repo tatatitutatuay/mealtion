@@ -29,9 +29,8 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
 
   final mealsCount = await supabase
       .from('meals')
-      .select('id', const FetchOptions(count: CountOption.exact))
-      .eq('user_id', userId)
-      .count();
+      .count(CountOption.exact)
+      .eq('user_id', userId);
 
   final monthMeals = await supabase
       .from('meals')
@@ -51,7 +50,7 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
     final foodRows = await supabase
         .from('meal_foods')
         .select('food_name')
-        .in_('meal_id', monthMealIds);
+        .inFilter('meal_id', monthMealIds);
     monthFoodsCount = (foodRows as List<dynamic>)
         .cast<Map<String, dynamic>>()
         .map((r) => r['food_name'] as String)
@@ -61,7 +60,7 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
     final restaurantRows = await supabase
         .from('meals')
         .select('restaurant_id')
-        .in_('id', monthMealIds);
+        .inFilter('id', monthMealIds);
     monthRestaurantsCount = (restaurantRows as List<dynamic>)
         .cast<Map<String, dynamic>>()
         .where((r) => r['restaurant_id'] != null)
@@ -75,7 +74,7 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
     username: profileData['username'] as String?,
     bio: profileData['bio'] as String?,
     photoUrl: profileData['photo_url'] as String?,
-    totalMeals: mealsCount ?? 0,
+    totalMeals: mealsCount,
     monthMeals: monthMealIds.length,
     monthFoods: monthFoodsCount,
     monthRestaurants: monthRestaurantsCount,

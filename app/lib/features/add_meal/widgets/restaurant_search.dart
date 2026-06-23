@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class RestaurantSearch extends StatelessWidget {
+class RestaurantSearch extends StatefulWidget {
   final String? restaurant;
   final String? branch;
   final ValueChanged<String?> onRestaurantChanged;
@@ -15,6 +15,39 @@ class RestaurantSearch extends StatelessWidget {
   });
 
   @override
+  State<RestaurantSearch> createState() => _RestaurantSearchState();
+}
+
+class _RestaurantSearchState extends State<RestaurantSearch> {
+  late TextEditingController _restaurantController;
+  late TextEditingController _branchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _restaurantController = TextEditingController(text: widget.restaurant ?? '');
+    _branchController = TextEditingController(text: widget.branch ?? '');
+  }
+
+  @override
+  void didUpdateWidget(RestaurantSearch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.restaurant != oldWidget.restaurant && widget.restaurant != _restaurantController.text) {
+      _restaurantController.text = widget.restaurant ?? '';
+    }
+    if (widget.branch != oldWidget.branch && widget.branch != _branchController.text) {
+      _branchController.text = widget.branch ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _restaurantController.dispose();
+    _branchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -23,18 +56,18 @@ class RestaurantSearch extends StatelessWidget {
             labelText: 'Restaurant',
             hintText: 'Search or create...',
             border: const OutlineInputBorder(),
-            suffixIcon: restaurant != null
+            suffixIcon: widget.restaurant != null
                 ? IconButton(
                     icon: const Icon(Icons.clear),
-                    onPressed: () => onRestaurantChanged(null),
+                    onPressed: () {
+                      _restaurantController.clear();
+                      widget.onRestaurantChanged(null);
+                    },
                   )
                 : null,
           ),
-          controller: TextEditingController(text: restaurant ?? ''),
-          onChanged: (v) => onRestaurantChanged(v.isEmpty ? null : v),
-          onSubmitted: (v) {
-            if (v.isNotEmpty) onRestaurantChanged(v);
-          },
+          controller: _restaurantController,
+          onChanged: (v) => widget.onRestaurantChanged(v.isEmpty ? null : v),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -42,18 +75,18 @@ class RestaurantSearch extends StatelessWidget {
             labelText: 'Branch (optional)',
             hintText: 'Search or create...',
             border: const OutlineInputBorder(),
-            suffixIcon: branch != null
+            suffixIcon: widget.branch != null
                 ? IconButton(
                     icon: const Icon(Icons.clear),
-                    onPressed: () => onBranchChanged(null),
+                    onPressed: () {
+                      _branchController.clear();
+                      widget.onBranchChanged(null);
+                    },
                   )
                 : null,
           ),
-          controller: TextEditingController(text: branch ?? ''),
-          onChanged: (v) => onBranchChanged(v.isEmpty ? null : v),
-          onSubmitted: (v) {
-            if (v.isNotEmpty) onBranchChanged(v);
-          },
+          controller: _branchController,
+          onChanged: (v) => widget.onBranchChanged(v.isEmpty ? null : v),
         ),
       ],
     );

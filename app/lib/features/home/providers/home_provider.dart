@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/home_data.dart';
@@ -56,7 +55,7 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
     final foodRows = await supabase
         .from('meal_foods')
         .select('food_name')
-        .in_('meal_id', mealRows.cast<Map<String, dynamic>>().map((r) => r['id'] as String).toList());
+        .inFilter('meal_id', mealRows.cast<Map<String, dynamic>>().map((r) => r['id'] as String).toList());
 
     totalFoods = (foodRows as List<dynamic>)
         .cast<Map<String, dynamic>>()

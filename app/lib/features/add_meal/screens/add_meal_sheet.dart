@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import '../models/add_meal_state.dart';
 import '../providers/add_meal_provider.dart';
@@ -33,6 +34,7 @@ class AddMealSheet extends ConsumerStatefulWidget {
 class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   late TextEditingController _noteController;
   final _picker = ImagePicker();
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       return;
     }
 
+    setState(() => _isSaving = true);
     try {
       await ref.read(mealApiProvider).createMeal(state);
       ref.read(addMealProvider.notifier).reset();
@@ -103,6 +106,8 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
           SnackBar(content: Text('Failed to save: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -195,6 +200,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                       photos: state.photos,
                       onPickGallery: _pickPhotos,
                       onPickCamera: _pickCamera,
+                      onRemove: (i) => ref.read(addMealProvider.notifier).removePhoto(i),
                     ),
                     const SizedBox(height: 16),
                     _buildSectionTitle('Date & Time'),
@@ -203,7 +209,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                         Expanded(
                           child: OutlinedButton.icon(
                             icon: const Icon(Icons.calendar_today, size: 18),
-                            label: Text('${state.date.day}/${state.date.month}/${state.date.year}'),
+                            label: Text(DateFormat('d MMM yyyy').format(state.date)),
                             onPressed: () async {
                               final date = await showDatePicker(
                                 context: context,
@@ -295,9 +301,11 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                     ),
                     const SizedBox(height: 24),
                     FilledButton.icon(
-                      onPressed: _save,
-                      icon: const Icon(Icons.save),
-                      label: const Text('Save Meal'),
+                      onPressed: _isSaving ? null : _save,
+                      icon: _isSaving
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
+                          : const Icon(Icons.save),
+                      label: Text(_isSaving ? 'Saving...' : 'Save Meal'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),

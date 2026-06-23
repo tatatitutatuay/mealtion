@@ -6,7 +6,9 @@ import 'package:mealtion/core/theme/shadows.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../models/friends_models.dart';
 import '../providers/friends_providers.dart';
-import '../providers/friend_actions.dart';
+import '../providers/engagement_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -18,6 +20,25 @@ class FriendsScreen extends ConsumerStatefulWidget {
 
 class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   int _tabIndex = 0;
+
+  Future<void> _toggleLike(String mealId) async {
+    try {
+      await ref.read(engagementProvider).toggleLike(mealId);
+      ref.invalidate(friendsFeedProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e')),
+        );
+      }
+    }
+  }
+
+  void _openComments(String mealId) {
+    final userId = ref.read(authProvider)?.id;
+    if (userId == null) return;
+    CommentSheet.show(context, mealId, userId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -199,13 +220,31 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(Icons.favorite_border, size: 18, color: AppColors.grey500),
-                    const SizedBox(width: 4),
-                    Text('${post.likeCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                    GestureDetector(
+                      onTap: () => _toggleLike(post.id),
+                      child: Row(
+                        children: [
+                          Icon(
+                            post.isLiked ? Icons.favorite : Icons.favorite_border,
+                            size: 18,
+                            color: post.isLiked ? AppColors.error : AppColors.grey500,
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${post.likeCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.grey500),
-                    const SizedBox(width: 4),
-                    Text('${post.commentCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                    GestureDetector(
+                      onTap: () => _openComments(post.id),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.grey500),
+                          const SizedBox(width: 4),
+                          Text('${post.commentCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
                     const Spacer(),
                     const Icon(Icons.bookmark_border, size: 18, color: AppColors.grey500),
                   ],

@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/friends_models.dart';
@@ -29,9 +28,14 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
         id, user_id, date, time, restaurant_id, branch_id, price_amount,
         heaviness, feeling, note, is_private,
         meal_foods(id, food_name),
-        meal_photos(id, storage_path, sort_order)
+        meal_photos(id, storage_path, sort_order),
+        profiles:user_id(display_name, photo_url),
+        restaurants(id, name),
+        branches(id, name),
+        likes(id, user_id),
+        comments(id, user_id, body, created_at)
       ''')
-      .in_('user_id', friendIds)
+      .inFilter('user_id', friendIds)
       .eq('is_private', false)
       .order('date', ascending: false)
       .order('time', ascending: false)
@@ -40,25 +44,30 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
   final posts = <FeedPost>[];
   for (final row in (rows as List<dynamic>).cast<Map<String, dynamic>>()) {
     final ownerId = row['user_id'] as String;
-    final profiles = await supabase
-        .from('profiles')
-        .select('display_name, photo_url')
-        .eq('id', ownerId)
-        .limit(1);
-
-    final profile = (profiles as List<dynamic>).isNotEmpty
-        ? profiles.first as Map<String, dynamic>
-        : <String, dynamic>{};
+    final profile = row['profiles'] as Map<String, dynamic>? ?? {};
 
     final foods = (row['meal_foods'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
-            ?.map((f) => f['food_name'] as String)
+            .map((f) => f['food_name'] as String)
             .toList() ?? [];
 
     final firstPhoto = (row['meal_photos'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
-        ?.where((p) => p['storage_path'] != null)
+        .where((p) => p['storage_path'] != null)
         .toList();
+
+    final likes = (row['likes'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+    final isLiked = likes.any((l) => l['user_id'] == userId);
+
+    final comments = (row['comments'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+    final recentComments = comments.take(2).map((c) {
+      return CommentPreview(
+        userId: c['user_id'] as String,
+        displayName: '',
+        body: c['body'] as String,
+        createdAt: c['created_at'] as String,
+      );
+    }).toList();
 
     posts.add(FeedPost(
       id: row['id'] as String,
@@ -74,6 +83,10 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
       note: row['note'] as String?,
       foods: foods,
       thumbnailUrl: firstPhoto?.isNotEmpty == true ? firstPhoto!.first['storage_path'] as String : null,
+      likeCount: likes.length,
+      commentCount: comments.length,
+      isLiked: isLiked,
+      recentComments: recentComments,
     ));
   }
   return posts;
@@ -101,7 +114,7 @@ final friendsListProvider = FutureProvider<List<FriendProfile>>((ref) async {
   final profileRows = await supabase
       .from('profiles')
       .select('id, display_name, username, bio, photo_url')
-      .in_('id', friendIds);
+      .inFilter('id', friendIds);
 
   return (profileRows as List<dynamic>)
       .cast<Map<String, dynamic>>()
@@ -131,7 +144,7 @@ final pendingRequestsProvider = FutureProvider<List<FriendProfile>>((ref) async 
   final profileRows = await supabase
       .from('profiles')
       .select('id, display_name, username, bio, photo_url')
-      .in_('id', requesterIds);
+      .inFilter('id', requesterIds);
 
   return (profileRows as List<dynamic>)
       .cast<Map<String, dynamic>>()

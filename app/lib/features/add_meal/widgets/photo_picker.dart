@@ -7,12 +7,14 @@ class PhotoPicker extends StatelessWidget {
   final List<AddMealPhoto> photos;
   final VoidCallback onPickGallery;
   final VoidCallback onPickCamera;
+  final ValueChanged<int> onRemove;
 
   const PhotoPicker({
     super.key,
     required this.photos,
     required this.onPickGallery,
     required this.onPickCamera,
+    required this.onRemove,
   });
 
   @override
@@ -49,7 +51,8 @@ class PhotoPicker extends StatelessWidget {
             child: Center(
               child: Text(
                 'Add at least 1 photo',
-style: TextStyle(color: AppColors.grey500),
+                style: TextStyle(color: AppColors.grey500),
+              ),
             ),
           )
         else
@@ -88,9 +91,7 @@ style: TextStyle(color: AppColors.grey500),
                       top: 4,
                       right: 4,
                       child: GestureDetector(
-                        onTap: () {
-                          // Remove handled by parent
-                        },
+                        onTap: () => onRemove(index),
                         child: Container(
                           padding: const EdgeInsets.all(2),
                           decoration: const BoxDecoration(

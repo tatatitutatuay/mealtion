@@ -7,13 +7,13 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../friends/providers/profile_provider.dart';
+import '../../profile/screens/edit_profile_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authProvider);
     final profile = ref.watch(myProfileProvider);
 
     return Scaffold(
@@ -70,7 +70,12 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         SizedBox(
                           width: 140,
-                          child: OutlinedButton(onPressed: () {}, child: const Text('Edit Profile')),
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                            ),
+                            child: const Text('Edit Profile'),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         SizedBox(

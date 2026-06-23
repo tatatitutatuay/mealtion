@@ -6,11 +6,15 @@ import 'package:mealtion/core/theme/typography.dart';
 class GreetingBar extends StatelessWidget {
   final String displayName;
   final String? photoUrl;
+  final int notificationCount;
+  final VoidCallback? onNotificationTap;
 
   const GreetingBar({
     super.key,
     required this.displayName,
     this.photoUrl,
+    this.notificationCount = 0,
+    this.onNotificationTap,
   });
 
   @override
@@ -45,22 +49,26 @@ class GreetingBar extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
                 color: AppColors.textSecondary,
-                onPressed: () {},
+                onPressed: onNotificationTap,
               ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
+              if (notificationCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    child: Text(
+                      notificationCount > 9 ? '9+' : '$notificationCount',
+                      style: AppTypography.c3.copyWith(color: AppColors.white),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                  child: Text('5', style: AppTypography.c3.copyWith(color: AppColors.white),
-                    textAlign: TextAlign.center),
                 ),
-              ),
             ],
           ),
         ],

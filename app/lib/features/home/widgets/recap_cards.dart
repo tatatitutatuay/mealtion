@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/shadows.dart';
@@ -9,13 +10,18 @@ class RecapCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final lastMonth = DateTime(now.year, now.month - 1, 1);
+    final monthLabel = DateFormat('MMMM yyyy').format(lastMonth);
+    final yearLabel = '${now.year}';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
       child: Row(
         children: [
-          Expanded(child: _card('Monthly Wrapped', 'April 2026', Icons.auto_awesome_mosaic_outlined)),
+          Expanded(child: _card('Monthly Wrapped', monthLabel, Icons.auto_awesome_mosaic_outlined)),
           const SizedBox(width: AppSpacing.cardGap),
-          Expanded(child: _card('Yearly Wrapped', '2026', Icons.auto_awesome_outlined)),
+          Expanded(child: _card('Yearly Wrapped', yearLabel, Icons.auto_awesome_outlined)),
         ],
       ),
     );

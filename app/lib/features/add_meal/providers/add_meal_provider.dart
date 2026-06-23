@@ -16,6 +16,35 @@ class AddMealNotifier extends StateNotifier<AddMealState> {
     state = state.copyWith(photos: photos);
   }
 
+  void removePhoto(int index) {
+    final photos = [...state.photos];
+    if (index < 0 || index >= photos.length) return;
+    photos.removeAt(index);
+    for (var i = 0; i < photos.length; i++) {
+      photos[i] = AddMealPhoto(
+        localPath: photos[i].localPath,
+        file: photos[i].file,
+        sortOrder: i,
+      );
+    }
+    state = state.copyWith(photos: photos);
+  }
+
+  void reorderPhoto(int oldIndex, int newIndex) {
+    final photos = [...state.photos];
+    if (newIndex > oldIndex) newIndex--;
+    final photo = photos.removeAt(oldIndex);
+    photos.insert(newIndex, photo);
+    for (var i = 0; i < photos.length; i++) {
+      photos[i] = AddMealPhoto(
+        localPath: photos[i].localPath,
+        file: photos[i].file,
+        sortOrder: i,
+      );
+    }
+    state = state.copyWith(photos: photos);
+  }
+
   void setDate(DateTime date) {
     state = state.copyWith(date: date);
   }
