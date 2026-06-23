@@ -8,6 +8,8 @@ import '../widgets/emotion_filters.dart';
 import '../widgets/monthly_snapshot.dart';
 import '../widgets/recap_cards.dart';
 import '../widgets/recent_entries.dart';
+import '../../notifications/providers/notifications_provider.dart';
+import '../../notifications/screens/notifications_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,6 +17,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(homeDashboardProvider);
+    final unreadCount = ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
 
     return Scaffold(
       body: dashboard.when(
@@ -28,6 +31,10 @@ class HomeScreen extends ConsumerWidget {
               GreetingBar(
                 displayName: data.displayName,
                 photoUrl: data.photoUrl,
+                notificationCount: unreadCount,
+                onNotificationTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
               ),
               const SizedBox(height: 24),
               CalendarWidget(mealDates: data.mealDatesThisMonth),

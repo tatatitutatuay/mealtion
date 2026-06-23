@@ -1,10 +1,9 @@
-feat: 5-step onboarding flow
+feat: notifications screen + unread badge
 
-- OnboardingScreen: profile identity, info, currency, price thresholds, permissions
-- AuthGuard redirects to /onboarding if onboarding_completed=false
-- Auth provider fetches profile from DB (not just session metadata)
-- AuthState.copyWith for updating after onboarding
-- Route /onboarding added to router
+- NotificationItem model + provider (fetch with actor join)
+- NotificationsScreen: list with icons per type, mark as read on tap
+- Unread count provider wired to GreetingBar badge
+- Tap notification with meal_id opens meal detail
 
 Generated with [Devin](https://devin.ai)
 
