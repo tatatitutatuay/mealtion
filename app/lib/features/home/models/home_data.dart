@@ -1,3 +1,6 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/supabase/supabase_client.dart';
+
 class HomeMealEntry {
   final String id;
   final DateTime date;
@@ -25,7 +28,7 @@ class HomeMealEntry {
     this.isPrivate = false,
   });
 
-  factory HomeMealEntry.fromJson(Map<String, dynamic> json) {
+  factory HomeMealEntry.fromJson(Map<String, dynamic> json, {SupabaseClient? supabase}) {
     final mealFoods = (json['meal_foods'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
             ?.map((f) => f['food_name'] as String)
@@ -55,7 +58,9 @@ class HomeMealEntry {
       feeling: json['feeling'] as String?,
       note: json['note'] as String?,
       foods: mealFoods,
-      thumbnailUrl: firstPhoto?['storage_path'] as String?,
+      thumbnailUrl: firstPhoto != null && supabase != null
+          ? resolvePhotoUrl(supabase, firstPhoto['storage_path'] as String)
+          : firstPhoto?['storage_path'] as String?,
       isPrivate: json['is_private'] as bool? ?? false,
     );
   }

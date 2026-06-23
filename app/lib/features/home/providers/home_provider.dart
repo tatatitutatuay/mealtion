@@ -82,7 +82,7 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
 
   final recentList = (recentRows as List<dynamic>)
       .cast<Map<String, dynamic>>()
-      .map((j) => HomeMealEntry.fromJson(j))
+      .map((j) => HomeMealEntry.fromJson(j, supabase: supabase))
       .take(3)
       .toList();
 

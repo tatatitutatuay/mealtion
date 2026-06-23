@@ -82,7 +82,7 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
       feeling: row['feeling'] as String?,
       note: row['note'] as String?,
       foods: foods,
-      thumbnailUrl: firstPhoto?.isNotEmpty == true ? firstPhoto!.first['storage_path'] as String : null,
+      thumbnailUrl: firstPhoto?.isNotEmpty == true ? resolvePhotoUrl(supabase, firstPhoto!.first['storage_path'] as String) : null,
       likeCount: likes.length,
       commentCount: comments.length,
       isLiked: isLiked,

@@ -95,14 +95,14 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
       grouped[key] = BaseBookmarkItem(
         name: existing.name,
         subtitle: existing.subtitle,
-        thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? photos.first['storage_path'] as String : null),
+        thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null),
         mealCount: existing.mealCount + 1,
       );
     } else {
       grouped[key] = BaseBookmarkItem(
         name: name,
         subtitle: branchName,
-        thumbnailUrl: photos.isNotEmpty ? photos.first['storage_path'] as String : null,
+        thumbnailUrl: photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null,
         mealCount: 1,
       );
     }
@@ -144,13 +144,13 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
       final existing = grouped[name]!;
       grouped[name] = BaseBookmarkItem(
         name: existing.name,
-        thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? photos.first['storage_path'] as String : null),
+        thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null),
         mealCount: existing.mealCount + 1,
       );
     } else {
       grouped[name] = BaseBookmarkItem(
         name: name,
-        thumbnailUrl: photos.isNotEmpty ? photos.first['storage_path'] as String : null,
+        thumbnailUrl: photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null,
         mealCount: 1,
       );
     }
@@ -195,7 +195,7 @@ final collectionMealsProvider = FutureProvider.family<List<CollectionMeal>, Stri
         return CollectionMeal(
           mealId: meal['id'] as String,
           date: DateTime.parse(meal['date'] as String),
-          thumbnailUrl: photos.first['storage_path'] as String,
+          thumbnailUrl: resolvePhotoUrl(supabase, photos.first['storage_path'] as String),
           photoCount: photos.length,
           foods: foods,
           restaurantName: (meal['restaurants'] as Map<String, dynamic>?)?['name'] as String?,
