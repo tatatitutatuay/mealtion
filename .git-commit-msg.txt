@@ -1,9 +1,11 @@
-feat: friend profile screen with stats + gallery
+feat: settings screen
 
-- FriendProfileScreen: header, stats (meals, friends), month nav, timeline/grid
-- userProfileDataProvider: fetch any user's profile + stats
-- userGalleryProvider: parameterized gallery (public meals only)
-- Friend list tap → friend profile screen
+- Currency selection (saved to profiles table)
+- Price display privacy (actual/level/hidden)
+- Notification preferences toggles
+- Account deletion with confirmation (cascades profile + all data)
+- Logout
+- Settings icon in profile screen AppBar
 
 Generated with [Devin](https://devin.ai)
 
