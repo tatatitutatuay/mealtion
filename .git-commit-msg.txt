@@ -1,9 +1,8 @@
-feat: bookmark actions — save meal to collection
+fix: router refresh on auth state change
 
-- Bookmark icon in meal detail sheet header (own + friend meals)
-- Collection selector bottom sheet with existing collections
-- Create new collection dialog from selector
-- Uses existing BookmarkActions provider (addMealToCollection)
+- Add _AuthRefreshListenable to trigger GoRouter redirect when authProvider changes
+- Onboarding "Get Started" now redirects to home after profile update
+- Debug prints in onboarding _finish() to trace save flow
 
 Generated with [Devin](https://devin.ai)
 
