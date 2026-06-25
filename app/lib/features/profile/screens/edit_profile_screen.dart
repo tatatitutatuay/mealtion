@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
@@ -19,6 +21,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _usernameController;
   late TextEditingController _bioController;
   bool _isSaving = false;
+  String? _photoUrl;
+  File? _pickedPhoto;
+  bool _photoRemoved = false;
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -27,6 +33,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _displayNameController = TextEditingController(text: profile?.displayName ?? '');
     _usernameController = TextEditingController(text: profile?.username ?? '');
     _bioController = TextEditingController(text: profile?.bio ?? '');
+    _photoUrl = (profile?.photoUrl ?? '').isNotEmpty ? profile!.photoUrl : null;
   }
 
   @override
@@ -37,6 +44,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickPhoto() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked != null) {
+      setState(() => _pickedPhoto = File(picked.path));
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    if (picked != null) {
+      setState(() => _pickedPhoto = File(picked.path));
+    }
+  }
+
   Future<void> _save() async {
     final userId = ref.read(authProvider)?.id;
     if (userId == null) return;
@@ -44,10 +65,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _isSaving = true);
     try {
       final supabase = ref.read(supabaseProvider);
+      String? newPhotoUrl;
+
+      if (_pickedPhoto != null) {
+        final ext = _pickedPhoto!.path.split('.').last;
+        final storagePath = '$userId/avatar.$ext';
+        try {
+          await supabase.storage.from('avatars').remove([storagePath]);
+        } catch (_) {}
+        await supabase.storage.from('avatars').upload(storagePath, _pickedPhoto!);
+        newPhotoUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
+      }
+
       await supabase.from('profiles').update({
         'display_name': _displayNameController.text.trim(),
         'username': _usernameController.text.trim().isEmpty ? null : _usernameController.text.trim(),
         'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
+        if (newPhotoUrl != null) 'photo_url': newPhotoUrl,
+        if (_photoRemoved && newPhotoUrl == null) 'photo_url': '',
       }).eq('id', userId);
 
       ref.invalidate(myProfileProvider);
@@ -82,6 +117,54 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: GestureDetector(
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  builder: (ctx) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.photo_outlined),
+                          title: const Text('Choose from Gallery'),
+                          onTap: () { Navigator.pop(ctx); _pickPhoto(); },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.camera_alt_outlined),
+                          title: const Text('Take Photo'),
+                          onTap: () { Navigator.pop(ctx); _takePhoto(); },
+                        ),
+                        if (_pickedPhoto != null || _photoUrl != null)
+                          ListTile(
+                            leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                            title: const Text('Remove Photo'),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              setState(() {
+                                _pickedPhoto = null;
+                                _photoUrl = null;
+                                _photoRemoved = true;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 48,
+                  backgroundColor: AppColors.grey100,
+                  backgroundImage: _pickedPhoto != null
+                      ? FileImage(_pickedPhoto!)
+                      : (_photoUrl != null ? NetworkImage(_photoUrl!) : null),
+                  child: (_pickedPhoto == null && _photoUrl == null)
+                      ? const Icon(Icons.camera_alt, color: AppColors.grey500)
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             Text('Display Name', style: AppTypography.s2),
             const SizedBox(height: 8),
             TextField(
