@@ -30,3 +30,7 @@ bin/
 *.swo
 .vscode/
 
+# SonarCloud
+.scannerwork/
+dart-analyze.json
+

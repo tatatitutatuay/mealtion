@@ -1,7 +1,0 @@
-organization=tatatitutatuay
-projectKey=tatatitutatuay_mealtion
-serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.93462
-dashboardUrl=https://sonarcloud.io/dashboard?id=tatatitutatuay_mealtion
-ceTaskId=AZ7-7VxuyTkczu3XDKNn
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZ7-7VxuyTkczu3XDKNn
