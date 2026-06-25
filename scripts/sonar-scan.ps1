@@ -31,8 +31,6 @@ dart analyze --format=json > ..\dart-analyze.json 2>&1
 Pop-Location
 
 Write-Host "Running SonarCloud scanner..." -ForegroundColor Cyan
-sonar-scanner `
-    -Dsonar.login=$env:SONAR_TOKEN `
-    -Dsonar.host.url=https://sonarcloud.io
+sonar-scanner "-Dsonar.login=$env:SONAR_TOKEN" "-Dsonar.host.url=https://sonarcloud.io"
 
 Write-Host "Done. View results at https://sonarcloud.io/project/overview?id=tatatitutatuay_mealtion" -ForegroundColor Green
