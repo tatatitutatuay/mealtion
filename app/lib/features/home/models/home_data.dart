@@ -31,15 +31,15 @@ class HomeMealEntry {
   factory HomeMealEntry.fromJson(Map<String, dynamic> json, {SupabaseClient? supabase}) {
     final mealFoods = (json['meal_foods'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
-            ?.map((f) => f['food_name'] as String)
+            .map((f) => f['food_name'] as String)
             .toList() ??
         [];
 
     final firstPhoto = (json['meal_photos'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
-            ?.where((p) => p['storage_path'] != null)
+            .where((p) => p['storage_path'] != null)
             .toList()
-            ?.isNotEmpty == true
+            .isNotEmpty == true
         ? (json['meal_photos'] as List<dynamic>).first as Map<String, dynamic>
         : null;
 

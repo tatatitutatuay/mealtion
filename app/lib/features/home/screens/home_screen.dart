@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mealtion/core/theme/spacing.dart';
 import '../providers/home_provider.dart';
 import '../widgets/greeting_bar.dart';
 import '../widgets/calendar_widget.dart';
