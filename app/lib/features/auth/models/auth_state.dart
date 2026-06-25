@@ -7,6 +7,9 @@ class AuthState {
   final String? username;
   final String? photoUrl;
   final bool onboardingCompleted;
+  final String primaryCurrency;
+  final double priceThresholdLow;
+  final double priceThresholdHigh;
 
   AuthState({
     required this.id,
@@ -15,6 +18,9 @@ class AuthState {
     this.username,
     this.photoUrl,
     this.onboardingCompleted = false,
+    this.primaryCurrency = 'USD',
+    this.priceThresholdLow = 10.0,
+    this.priceThresholdHigh = 50.0,
   });
 
   factory AuthState.fromJson(Map<String, dynamic> json) {
@@ -25,6 +31,9 @@ class AuthState {
       username: json['username'] as String?,
       photoUrl: json['photo_url'] as String?,
       onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
+      primaryCurrency: json['primary_currency'] as String? ?? 'USD',
+      priceThresholdLow: (json['price_threshold_low'] as num?)?.toDouble() ?? 10.0,
+      priceThresholdHigh: (json['price_threshold_high'] as num?)?.toDouble() ?? 50.0,
     );
   }
 
@@ -46,6 +55,9 @@ class AuthState {
     String? username,
     String? photoUrl,
     bool? onboardingCompleted,
+    String? primaryCurrency,
+    double? priceThresholdLow,
+    double? priceThresholdHigh,
   }) {
     return AuthState(
       id: id,
@@ -54,6 +66,9 @@ class AuthState {
       username: username ?? this.username,
       photoUrl: photoUrl ?? this.photoUrl,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      primaryCurrency: primaryCurrency ?? this.primaryCurrency,
+      priceThresholdLow: priceThresholdLow ?? this.priceThresholdLow,
+      priceThresholdHigh: priceThresholdHigh ?? this.priceThresholdHigh,
     );
   }
 }

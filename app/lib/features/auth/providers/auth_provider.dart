@@ -53,6 +53,9 @@ Future<AuthState> _fetchAuthState(SupabaseClient supabase, Session session) asyn
         username: profile['username'] as String?,
         photoUrl: profile['photo_url'] as String?,
         onboardingCompleted: profile['onboarding_completed'] as bool? ?? false,
+        primaryCurrency: profile['primary_currency'] as String? ?? 'USD',
+        priceThresholdLow: (profile['price_threshold_low'] as num?)?.toDouble() ?? 10.0,
+        priceThresholdHigh: (profile['price_threshold_high'] as num?)?.toDouble() ?? 50.0,
       );
     }
   } catch (_) {}

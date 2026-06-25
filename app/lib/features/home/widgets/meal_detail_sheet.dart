@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/utils/price_level.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/meal_detail_provider.dart';
 import '../../add_meal/providers/meal_api_provider.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
@@ -386,7 +388,33 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
   }
 
   Widget _priceRow(double price) {
-    return Text('\$${price.toStringAsFixed(2)}', style: AppTypography.s2);
+    final auth = ref.read(authProvider);
+    final level = calculatePriceLevel(
+      price,
+      auth?.priceThresholdLow ?? 10.0,
+      auth?.priceThresholdHigh ?? 50.0,
+    );
+    return Row(
+      children: [
+        Text('\$${price.toStringAsFixed(2)}', style: AppTypography.s2),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: level.color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(level.icon, size: 12, color: level.color),
+              const SizedBox(width: 4),
+              Text(level.label, style: AppTypography.b5.copyWith(color: level.color)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _chipsRow(String? heaviness, String? feeling) {
