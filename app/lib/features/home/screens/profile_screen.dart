@@ -7,6 +7,7 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../friends/providers/profile_provider.dart';
+import '../../friends/screens/friend_profile_screen.dart';
 import '../../profile/screens/edit_profile_screen.dart';
 import '../../profile/screens/settings_screen.dart';
 
@@ -91,7 +92,17 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(width: 12),
                         SizedBox(
                           width: 140,
-                          child: OutlinedButton(onPressed: () {}, child: const Text('View Profile')),
+                          child: OutlinedButton(
+                            onPressed: () {
+                              final userId = ref.read(authProvider)?.id;
+                              if (userId != null) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: userId)),
+                                );
+                              }
+                            },
+                            child: const Text('View Profile'),
+                          ),
                         ),
                       ],
                     ),
