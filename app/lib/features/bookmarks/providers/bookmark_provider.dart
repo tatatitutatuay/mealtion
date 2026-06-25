@@ -249,6 +249,10 @@ class BookmarkActions {
     await _supabase.from('bookmark_collections').delete().eq('id', collectionId);
   }
 
+  Future<void> renameCollection(String collectionId, String newName) async {
+    await _supabase.from('bookmark_collections').update({'name': newName}).eq('id', collectionId);
+  }
+
   Future<void> addMealToCollection(String collectionId, String mealId) async {
     final userId = _ref.read(authProvider)?.id;
     if (userId == null) throw Exception('Not authenticated');
