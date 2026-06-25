@@ -45,15 +45,39 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingCount = ref.watch(pendingRequestsProvider).valueOrNull?.length ?? 0;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Friends'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.mail_outline),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
-            ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.mail_outline),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
+                ),
+              ),
+              if (pendingCount > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      '$pendingCount',
+                      style: const TextStyle(color: AppColors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.person_add_outlined),
