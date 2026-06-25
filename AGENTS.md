@@ -74,8 +74,8 @@ $env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 - **Project URL**: `https://ssiaxokyvoqxroaavurx.supabase.co`
 - **Dashboard**: https://supabase.com/dashboard/project/ssiaxokyvoqxroaavurx
 - **SQL Editor**: Dashboard → SQL Editor (run schema/RLS changes here)
-- **Storage bucket**: `meal-photos` (public, owner-only upload/delete via RLS)
-- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies)
+- **Storage buckets**: `meal-photos` (public, owner-only upload/delete via RLS), `avatars` (public, owner-only upload/delete via RLS)
+- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies), `003_avatars_bucket.sql` (avatars bucket + RLS)
 - **Key gotcha**: Kotlin incremental compilation must be disabled (`kotlin.incremental=false` in `gradle.properties`) because pub cache (C:) and project (D:) are on different drives
 - **Profile auto-creation**: `authInitProvider` upserts a profile row on auth state change (no DB trigger needed)
 - **Photo URLs**: `meal_photos.storage_path` stores the full public URL from `getPublicUrl()`, not the raw storage path
@@ -83,19 +83,23 @@ $env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 ## 7. Feature Architecture
 
 - **Onboarding**: 5-step flow in single `OnboardingScreen`. AuthGuard redirects to `/onboarding` if `profiles.onboarding_completed=false`. Router uses `_AuthRefreshListenable` to trigger redirect on auth state change.
-- **Meal Detail**: `MealDetailSheet` — DraggableScrollableSheet with PageView photo carousel. Supports vertical swipe between meals (calendar mode via `mealIds` list). Bookmark + delete actions in header.
+- **Meal Detail**: `MealDetailSheet` — DraggableScrollableSheet with PageView photo carousel. Supports vertical swipe between meals (calendar mode via `mealIds` list). Bookmark + delete + edit actions in header. Shows price level badge (cheap/moderate/expensive) based on user thresholds.
+- **Meal Edit**: `AddMealSheet` accepts optional `mealId`. When provided, loads meal from DB, downloads photos to temp files, pre-fills all fields. Save calls `updateMeal` instead of `createMeal`.
 - **Notifications**: `notificationsProvider` fetches with actor join. `unreadNotificationCountProvider` wired to GreetingBar badge. Tap marks as read + opens meal detail if `meal_id` present.
-- **Friend Requests**: `FriendRequestsScreen` with Received/Sent tabs. `acceptFriendRequest` creates reciprocal row. `cancelSentRequest` deletes pending row.
-- **Friend Profiles**: `FriendProfileScreen` uses `userProfileDataProvider` (parameterized) + `userGalleryProvider` (public meals only). Reuses gallery timeline/grid layout.
+- **Friend Requests**: `FriendRequestsScreen` with Received/Sent tabs. `acceptFriendRequest` creates reciprocal row. `cancelSentRequest` deletes pending row. Unread badge on mail icon in FriendsScreen.
+- **Friend Profiles**: `FriendProfileScreen` uses `userProfileDataProvider` (parameterized) + `userGalleryProvider` (public meals only). Reuses gallery timeline/grid layout. Also used for "View Profile" on own profile.
 - **Settings**: `SettingsScreen` — currency, price privacy, notification toggles, account deletion (cascades via profile delete), logout.
-- **Bookmark Actions**: `BookmarkActions` provider (createCollection, addMealToCollection, removeMealFromCollection). Collection selector bottom sheet in meal detail.
+- **Bookmark Actions**: `BookmarkActions` provider (createCollection, renameCollection, deleteCollection, addMealToCollection, removeMealFromCollection). Collection selector bottom sheet in meal detail. Select mode in collections screen for batch delete + rename.
+- **Profile Photo**: `EditProfileScreen` has tappable avatar with gallery/camera picker. Uploads to `avatars` bucket. Supports removing photo.
+- **Restaurant Autocomplete**: `restaurantSearchProvider` + `branchSearchProvider` query DB for matches as user types (min 2 chars). Suggestion box shown below input.
+- **Calendar Filters**: `CalendarWidget` filter chip cycles through Health/Heaviness/Feeling/Price modes. Dots colored accordingly (green/orange/red).
+- **Draft Meals**: `draftProvider` saves drafts to `shared_preferences`. Resume via edit-note button in AddMealSheet header. Photos not persisted (paths only).
+- **Tag Autocomplete**: `tagSuggestionsProvider` queries `meal_tags` table. ActionChips shown below tag input.
+- **Price Level**: `PriceLevel` utility (`core/utils/price_level.dart`) calculates cheap/moderate/expensive from user's onboarding thresholds. Shown as colored badge in meal detail.
 
 ## 8. Known Gaps (Post-Implementation)
 
-- **Meal edit mode**: `updateMeal` API exists but AddMealSheet doesn't support edit mode yet (needs photo URL→File download)
-- **Profile photo upload**: No image picker in edit profile yet
-- **Restaurant search**: Widget exists but no autocomplete from DB
-- **Calendar filters**: "Health" dropdown is visual only, no actual filtering
-- **Draft meals**: Not implemented (discard dialog only)
-- **Tag autocomplete**: No suggestions from existing tags
-- **Price level calc**: No auto-calculation from thresholds
+All critical and high-priority gaps from the original audit are now implemented. Remaining minor items:
+- **Recent entries price level**: Recent meal cards show price but not the level badge (would require converting to ConsumerWidget)
+- **Onboarding debug prints**: Debug prints still in `onboarding_screen.dart` `_finish()` method — should be removed after confirming redirect works
+- **Draft photos**: Draft meals don't persist photos across sessions (only local paths, files may be cleared)
