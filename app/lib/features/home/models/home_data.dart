@@ -66,6 +66,15 @@ class HomeMealEntry {
   }
 }
 
+class CalendarMealInfo {
+  final DateTime date;
+  final String? heaviness;
+  final String? feeling;
+  final double? price;
+
+  CalendarMealInfo({required this.date, this.heaviness, this.feeling, this.price});
+}
+
 class HomeDashboardData {
   final String displayName;
   final String? photoUrl;
@@ -74,6 +83,7 @@ class HomeDashboardData {
   final int totalRestaurantsThisMonth;
   final double totalSpentThisMonth;
   final List<DateTime> mealDatesThisMonth;
+  final List<CalendarMealInfo> mealInfosThisMonth;
   final List<HomeMealEntry> recentMeals;
 
   HomeDashboardData({
@@ -84,6 +94,7 @@ class HomeDashboardData {
     required this.totalRestaurantsThisMonth,
     required this.totalSpentThisMonth,
     required this.mealDatesThisMonth,
+    required this.mealInfosThisMonth,
     required this.recentMeals,
   });
 }

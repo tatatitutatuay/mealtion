@@ -37,7 +37,10 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              CalendarWidget(mealDates: data.mealDatesThisMonth),
+              CalendarWidget(
+                mealDates: data.mealDatesThisMonth,
+                mealInfos: data.mealInfosThisMonth,
+              ),
               const SizedBox(height: 16),
               const EmotionFilters(),
               const SizedBox(height: 24),

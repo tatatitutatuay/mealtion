@@ -13,19 +13,25 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
   final monthStart = DateTime(now.year, now.month, 1);
   final monthEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
-  // 1. Meal dates for calendar this month
+  // 1. Meal dates + info for calendar this month
   final mealDateRows = await supabase
       .from('meals')
-      .select('date')
+      .select('date, heaviness, feeling, price_amount')
       .eq('user_id', userId)
       .gte('date', monthStart.toIso8601String().split('T')[0])
       .lte('date', monthEnd.toIso8601String().split('T')[0]);
 
-  final mealDates = (mealDateRows as List<dynamic>)
+  final mealInfos = (mealDateRows as List<dynamic>)
       .cast<Map<String, dynamic>>()
-      .map((r) => DateTime.parse(r['date'] as String))
-      .toSet()
+      .map((r) => CalendarMealInfo(
+            date: DateTime.parse(r['date'] as String),
+            heaviness: r['heaviness'] as String?,
+            feeling: r['feeling'] as String?,
+            price: (r['price_amount'] as num?)?.toDouble(),
+          ))
       .toList();
+
+  final mealDates = mealInfos.map((m) => m.date).toSet().toList();
 
   // 2. Monthly aggregates
   final mealsThisMonth = await supabase
@@ -94,6 +100,7 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
     totalRestaurantsThisMonth: restaurantIds,
     totalSpentThisMonth: totalSpent,
     mealDatesThisMonth: mealDates,
+    mealInfosThisMonth: mealInfos,
     recentMeals: recentList,
   );
 });
