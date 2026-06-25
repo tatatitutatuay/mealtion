@@ -69,6 +69,19 @@ $env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 - **Build web**: `flutter build web --debug`
 - **Emulator**: `MealtionPixel` (Pixel 7, Android API 36, google_apis x86_64)
 
+## 5b. SonarCloud (Code Quality)
+
+- **Dashboard**: https://sonarcloud.io/project/overview?id=tatatitutatuay_mealtion
+- **Config**: `sonar-project.properties` at repo root (organization: `tatatitutatuay`, projectKey: `tatatitutatuay_mealtion`)
+- **CI**: `.github/workflows/sonarcloud.yml` runs on push/PR to master. Needs `SONAR_TOKEN` secret in GitHub repo settings.
+- **Local scan**: `.\scripts\sonar-scan.ps1` (requires sonar-scanner in PATH + `$env:SONAR_TOKEN` set)
+- **Setup steps** (one-time):
+  1. Go to https://sonarcloud.io → Log in with GitHub
+  2. Import the `tatatitutatuay/mealtion` repo
+  3. Generate a token at My Account → Security
+  4. Add `SONAR_TOKEN` as a secret in GitHub repo → Settings → Secrets and variables → Actions
+- **Language**: Dart (SonarCloud has native Dart support — code smells, bugs, security hotspots, duplication)
+
 ## 6. Supabase
 
 - **Project URL**: `https://ssiaxokyvoqxroaavurx.supabase.co`
