@@ -8,6 +8,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/add_meal_state.dart';
 import '../providers/add_meal_provider.dart';
+import '../providers/draft_provider.dart';
 import '../providers/meal_api_provider.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/food_chips.dart';
@@ -155,6 +156,66 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     ]);
   }
 
+  Future<void> _showDrafts() async {
+    await ref.read(draftProvider.notifier).load();
+    if (!mounted) return;
+    final drafts = ref.read(draftProvider);
+    if (drafts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No drafts saved')),
+      );
+      return;
+    }
+    final selectedId = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(padding: EdgeInsets.all(16), child: Text('Drafts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+            const Divider(height: 1),
+            ...drafts.map((d) => ListTile(
+                  leading: const Icon(Icons.edit_note),
+                  title: Text(d.state.foods.isNotEmpty ? d.state.foods.map((f) => f.name).join(', ') : 'Untitled'),
+                  subtitle: Text('${d.state.date.day}/${d.state.date.month}/${d.state.date.year}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                    onPressed: () {
+                      ref.read(draftProvider.notifier).delete(d.id);
+                      Navigator.pop(ctx, '__deleted__');
+                    },
+                  ),
+                  onTap: () => Navigator.pop(ctx, d.id),
+                )),
+          ],
+        ),
+      ),
+    );
+    if (selectedId == null || selectedId == '__deleted__') return;
+    final draft = drafts.firstWhere((d) => d.id == selectedId);
+    final notifier = ref.read(addMealProvider.notifier);
+    notifier.setPhotos(const []);
+    notifier.setDate(draft.state.date);
+    notifier.setTime(draft.state.time);
+    notifier.setSource(draft.state.source);
+    for (final food in draft.state.foods) {
+      notifier.addFood(food.name);
+    }
+    for (final tag in draft.state.tags) {
+      notifier.addTag(tag);
+    }
+    notifier.setRestaurant(draft.state.restaurant);
+    notifier.setBranch(draft.state.branch);
+    notifier.setPrice(draft.state.price);
+    notifier.setHeaviness(draft.state.heaviness);
+    notifier.setFeeling(draft.state.feeling);
+    notifier.setNote(draft.state.note);
+    _noteController.text = draft.state.note ?? '';
+    notifier.setPrivate(draft.state.isPrivate);
+    ref.read(draftProvider.notifier).delete(draft.id);
+  }
+
   Future<void> _save() async {
     final state = ref.read(addMealProvider);
     if (!state.isValid) {
@@ -222,7 +283,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       return true;
     }
     if (result == 'draft') {
-      // TODO: save as draft to Isar
+      await ref.read(draftProvider.notifier).save(state);
       ref.read(addMealProvider.notifier).reset();
       return true;
     }
@@ -269,9 +330,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.edit_note),
-                      onPressed: () {
-                        // TODO: open drafts
-                      },
+                      onPressed: () => _showDrafts(),
                     ),
                   ],
                 ),
