@@ -39,6 +39,8 @@ dependencies:
   json_annotation: ^4.8.0
   image_picker: ^1.0.0
   flutter_dotenv: ^6.0.1
+  http: ^1.6.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

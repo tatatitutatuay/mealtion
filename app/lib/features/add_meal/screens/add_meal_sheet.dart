@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/add_meal_state.dart';
 import '../providers/add_meal_provider.dart';
 import '../providers/meal_api_provider.dart';
@@ -14,16 +16,19 @@ import '../widgets/price_input.dart';
 import '../widgets/heaviness_feeling_selector.dart';
 import '../widgets/restaurant_search.dart';
 import '../widgets/tag_input.dart';
+import '../../home/providers/meal_detail_provider.dart';
 
 class AddMealSheet extends ConsumerStatefulWidget {
-  const AddMealSheet({super.key});
+  final String? mealId;
 
-  static void show(BuildContext context) {
+  const AddMealSheet({super.key, this.mealId});
+
+  static void show(BuildContext context, {String? mealId}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => const AddMealSheet(),
+      builder: (_) => AddMealSheet(mealId: mealId),
     );
   }
 
@@ -35,11 +40,80 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   late TextEditingController _noteController;
   final _picker = ImagePicker();
   bool _isSaving = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _noteController = TextEditingController();
+    if (widget.mealId != null) {
+      _loadMealForEdit();
+    }
+  }
+
+  Future<void> _loadMealForEdit() async {
+    setState(() => _isLoading = true);
+    try {
+      final meal = await ref.read(mealDetailProvider(widget.mealId!).future);
+      final notifier = ref.read(addMealProvider.notifier);
+
+      // Download photos to temp files
+      final photos = <AddMealPhoto>[];
+      for (var i = 0; i < meal.photoUrls.length; i++) {
+        final url = meal.photoUrls[i];
+        try {
+          final response = await http.get(Uri.parse(url));
+          final tempDir = await getTemporaryDirectory();
+          final filePath = '${tempDir.path}/edit_${widget.mealId}_$i.jpg';
+          final file = File(filePath);
+          await file.writeAsBytes(response.bodyBytes);
+          photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i));
+        } catch (e) {
+          debugPrint('Failed to download photo $i: $e');
+        }
+      }
+
+      notifier.setPhotos(photos);
+      notifier.setDate(meal.date);
+      if (meal.time != null) {
+        final parts = meal.time!.split(':');
+        notifier.setTime(TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])));
+      }
+      notifier.setSource(MealSource.values.firstWhere(
+        (s) => s.name == meal.source,
+        orElse: () => MealSource.restaurant,
+      ));
+      for (final food in meal.foods) {
+        notifier.addFood(food);
+      }
+      for (final tag in meal.tags) {
+        notifier.addTag(tag);
+      }
+      if (meal.restaurantName != null) notifier.setRestaurant(meal.restaurantName);
+      if (meal.branchName != null) notifier.setBranch(meal.branchName);
+      if (meal.price != null) notifier.setPrice(meal.price);
+      if (meal.heaviness != null) {
+        notifier.setHeaviness(Heaviness.values.firstWhere(
+          (h) => h.name == meal.heaviness,
+          orElse: () => Heaviness.light,
+        ));
+      }
+      if (meal.feeling != null) {
+        notifier.setFeeling(Feeling.values.firstWhere(
+          (f) => f.name == meal.feeling,
+          orElse: () => Feeling.like,
+        ));
+      }
+      notifier.setNote(meal.note);
+      _noteController.text = meal.note ?? '';
+      notifier.setPrivate(meal.isPrivate);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load meal: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -92,12 +166,17 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(mealApiProvider).createMeal(state);
+      final api = ref.read(mealApiProvider);
+      if (widget.mealId != null) {
+        await api.updateMeal(widget.mealId!, state);
+      } else {
+        await api.createMeal(state);
+      }
       ref.read(addMealProvider.notifier).reset();
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, widget.mealId ?? true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Meal saved!')),
+          SnackBar(content: Text(widget.mealId != null ? 'Meal updated!' : 'Meal saved!')),
         );
       }
     } catch (e) {
@@ -167,6 +246,9 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
+          if (_isLoading) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
           return Scaffold(
             body: Column(
             children: [
@@ -181,7 +263,10 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                         if (await _onWillPop() && context.mounted) Navigator.pop(context);
                       },
                     ),
-                    const Text('Add Meal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      widget.mealId != null ? 'Edit Meal' : 'Add Meal',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.edit_note),
                       onPressed: () {

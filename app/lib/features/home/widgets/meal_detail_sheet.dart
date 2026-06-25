@@ -6,6 +6,7 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/meal_detail_provider.dart';
 import '../../add_meal/providers/meal_api_provider.dart';
+import '../../add_meal/screens/add_meal_sheet.dart';
 import '../../bookmarks/providers/bookmark_provider.dart';
 
 /// Meal detail bottom sheet.
@@ -133,9 +134,8 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Edit coming soon')),
-                    );
+                    Navigator.pop(context);
+                    AddMealSheet.show(context, mealId: widget.mealIds[_currentIndex]);
                   },
                 ),
               ],
