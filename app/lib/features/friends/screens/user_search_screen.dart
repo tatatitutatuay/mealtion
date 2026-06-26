@@ -54,6 +54,7 @@ class UserSearchScreen extends ConsumerWidget {
                       onPressed: () async {
                         try {
                           await ref.read(friendActionsProvider).sendRequest(userId);
+                          ref.invalidate(sentRequestsProvider);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Friend request sent!')),

@@ -10,6 +10,11 @@ import '../models/add_meal_state.dart';
 import '../providers/add_meal_provider.dart';
 import '../providers/draft_provider.dart';
 import '../providers/meal_api_provider.dart';
+import '../../home/providers/home_provider.dart';
+import '../../home/providers/gallery_provider.dart';
+import '../../home/providers/meal_detail_provider.dart';
+import '../../bookmarks/providers/bookmark_provider.dart';
+import '../../friends/providers/profile_provider.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/food_chips.dart';
 import '../widgets/source_selector.dart';
@@ -17,7 +22,6 @@ import '../widgets/price_input.dart';
 import '../widgets/heaviness_feeling_selector.dart';
 import '../widgets/restaurant_search.dart';
 import '../widgets/tag_input.dart';
-import '../../home/providers/meal_detail_provider.dart';
 
 class AddMealSheet extends ConsumerStatefulWidget {
   final String? mealId;
@@ -230,10 +234,17 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       final api = ref.read(mealApiProvider);
       if (widget.mealId != null) {
         await api.updateMeal(widget.mealId!, state);
+        ref.invalidate(mealDetailProvider(widget.mealId!));
       } else {
         await api.createMeal(state);
       }
       ref.read(addMealProvider.notifier).reset();
+      // Refresh all screens that show meal data
+      ref.invalidate(homeDashboardProvider);
+      ref.invalidate(galleryProvider);
+      ref.invalidate(basePlaceBookmarksProvider);
+      ref.invalidate(baseFoodBookmarksProvider);
+      ref.invalidate(myProfileProvider);
       if (mounted) Navigator.pop(context, widget.mealId ?? true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

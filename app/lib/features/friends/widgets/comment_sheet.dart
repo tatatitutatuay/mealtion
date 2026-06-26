@@ -5,6 +5,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/engagement_provider.dart';
+import '../providers/friends_providers.dart';
 
 class CommentSheet extends ConsumerStatefulWidget {
   final String mealId;
@@ -47,6 +48,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
       await ref.read(engagementProvider).addComment(widget.mealId, text);
       _controller.clear();
       ref.invalidate(mealCommentsProvider(widget.mealId));
+      ref.invalidate(friendsFeedProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -62,6 +64,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
     try {
       await ref.read(engagementProvider).deleteComment(commentId);
       ref.invalidate(mealCommentsProvider(widget.mealId));
+      ref.invalidate(friendsFeedProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

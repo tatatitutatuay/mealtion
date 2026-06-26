@@ -8,6 +8,7 @@ import '../models/friends_models.dart';
 import '../providers/friends_providers.dart';
 import '../providers/engagement_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../home/providers/meal_detail_provider.dart';
 import '../../home/widgets/meal_detail_sheet.dart';
 import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
@@ -28,6 +29,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     try {
       await ref.read(engagementProvider).toggleLike(mealId);
       ref.invalidate(friendsFeedProvider);
+      ref.invalidate(mealDetailProvider(mealId));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

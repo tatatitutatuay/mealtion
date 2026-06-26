@@ -161,6 +161,23 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
   return items;
 });
 
+/// Set of collection IDs that already contain [mealId]
+final mealCollectionIdsProvider = FutureProvider.family<Set<String>, String>((ref, mealId) async {
+  final auth = ref.watch(authProvider);
+  if (auth == null) return {};
+  final supabase = ref.watch(supabaseProvider);
+
+  final rows = await supabase
+      .from('bookmark_items')
+      .select('collection_id')
+      .eq('meal_id', mealId)
+      .eq('user_id', auth.id);
+
+  return (rows as List<dynamic>)
+      .map((r) => r['collection_id'] as String)
+      .toSet();
+});
+
 final collectionMealsProvider = FutureProvider.family<List<CollectionMeal>, String>((ref, collectionId) async {
   final supabase = ref.watch(supabaseProvider);
 
@@ -257,11 +274,11 @@ class BookmarkActions {
     final userId = _ref.read(authProvider)?.id;
     if (userId == null) throw Exception('Not authenticated');
 
-    await _supabase.from('bookmark_items').insert({
+    await _supabase.from('bookmark_items').upsert({
       'collection_id': collectionId,
       'meal_id': mealId,
       'user_id': userId,
-    });
+    }, onConflict: 'collection_id,meal_id');
   }
 
   Future<void> removeMealFromCollection(String collectionId, String mealId) async {

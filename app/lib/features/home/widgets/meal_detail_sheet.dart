@@ -7,9 +7,12 @@ import 'package:mealtion/core/theme/typography.dart';
 import 'package:mealtion/core/utils/price_level.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/meal_detail_provider.dart';
+import '../providers/home_provider.dart';
+import '../providers/gallery_provider.dart';
 import '../../add_meal/providers/meal_api_provider.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
 import '../../bookmarks/providers/bookmark_provider.dart';
+import '../../friends/providers/profile_provider.dart';
 
 /// Meal detail bottom sheet.
 /// [mealIds] supports vertical swipe between meals (calendar mode).
@@ -155,10 +158,11 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
   void _showCollectionSelector(String mealId) async {
     final collections = ref.read(bookmarkCollectionsProvider).valueOrNull ?? [];
 
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showModalBottomSheet<({String collectionId, bool alreadySaved})>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => _CollectionSelectorSheet(
+        mealId: mealId,
         collections: collections,
         onCreate: () async {
           final name = await showDialog<String>(
@@ -172,17 +176,19 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
 
     if (selected == null || !mounted) return;
 
-    String collectionId = selected;
-    if (collectionId == '__new__') {
-      // Already handled in sheet — get the new ID
-      return;
-    }
-
+    final actions = ref.read(bookmarkActionsProvider);
     try {
-      await ref.read(bookmarkActionsProvider).addMealToCollection(collectionId, mealId);
+      if (selected.alreadySaved) {
+        await actions.removeMealFromCollection(selected.collectionId, mealId);
+      } else {
+        await actions.addMealToCollection(selected.collectionId, mealId);
+      }
+      ref.invalidate(mealCollectionIdsProvider(mealId));
+      ref.invalidate(collectionMealsProvider(selected.collectionId));
+      ref.invalidate(bookmarkCollectionsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to collection')),
+          SnackBar(content: Text(selected.alreadySaved ? 'Removed from collection' : 'Added to collection')),
         );
       }
     } catch (e) {
@@ -214,6 +220,11 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
 
     try {
       await ref.read(mealApiProvider).deleteMeal(mealId);
+      ref.invalidate(homeDashboardProvider);
+      ref.invalidate(galleryProvider);
+      ref.invalidate(basePlaceBookmarksProvider);
+      ref.invalidate(baseFoodBookmarksProvider);
+      ref.invalidate(myProfileProvider);
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -468,13 +479,15 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
 }
 
 class _CollectionSelectorSheet extends ConsumerWidget {
+  final String mealId;
   final List<BookmarkCollection> collections;
   final Future<String?> Function() onCreate;
 
-  const _CollectionSelectorSheet({required this.collections, required this.onCreate});
+  const _CollectionSelectorSheet({required this.mealId, required this.collections, required this.onCreate});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final existingIds = ref.watch(mealCollectionIdsProvider(mealId)).valueOrNull ?? {};
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -501,12 +514,17 @@ class _CollectionSelectorSheet extends ConsumerWidget {
             },
           ),
           const Divider(height: 1),
-          ...collections.map((c) => ListTile(
-                leading: const Icon(Icons.bookmark_outline),
-                title: Text(c.name),
-                subtitle: Text('${c.itemCount} items'),
-                onTap: () => Navigator.pop(context, c.id),
-              )),
+          ...collections.map((c) {
+            final alreadySaved = existingIds.contains(c.id);
+            return ListTile(
+              leading: Icon(alreadySaved ? Icons.bookmark : Icons.bookmark_outline,
+                  color: alreadySaved ? AppColors.primary : null),
+              title: Text(c.name),
+              subtitle: Text('${c.itemCount} items'),
+              trailing: alreadySaved ? const Icon(Icons.check, color: AppColors.primary) : null,
+              onTap: () => Navigator.pop(context, c.id),
+            );
+          }),
           if (collections.isEmpty)
             const Padding(
               padding: EdgeInsets.all(24),

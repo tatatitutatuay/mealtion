@@ -6,6 +6,8 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../../../core/supabase/supabase_client.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../friends/providers/profile_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -50,12 +52,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _currency = currency);
     final supabase = ref.read(supabaseProvider);
     await supabase.from('profiles').update({'primary_currency': currency}).eq('id', supabase.auth.currentUser!.id);
+    // Update auth state in-place (invalidating authProvider would reset to null)
+    final auth = ref.read(authProvider);
+    if (auth != null) {
+      ref.read(authProvider.notifier).state = auth.copyWith(primaryCurrency: currency);
+    }
+    ref.invalidate(myProfileProvider);
   }
 
   void _savePricePrivacy(String privacy) async {
     setState(() => _pricePrivacy = privacy);
     final supabase = ref.read(supabaseProvider);
     await supabase.from('profiles').update({'price_display_privacy': privacy}).eq('id', supabase.auth.currentUser!.id);
+    ref.invalidate(myProfileProvider);
   }
 
   void _deleteAccount() async {
