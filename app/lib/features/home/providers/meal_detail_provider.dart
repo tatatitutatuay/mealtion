@@ -39,6 +39,8 @@ class MealDetail {
 }
 
 final mealDetailProvider = FutureProvider.family<MealDetail, String>((ref, mealId) async {
+  final auth = ref.watch(authProvider);
+  if (auth == null) throw Exception('Not authenticated');
   final supabase = ref.watch(supabaseProvider);
 
   final row = await supabase

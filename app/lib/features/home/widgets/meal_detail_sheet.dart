@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
@@ -60,6 +61,7 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
   late PageController _verticalController;
   late int _currentIndex;
   late PageController _photoController;
+  int _currentPhotoPage = 0;
 
   @override
   void initState() {
@@ -74,6 +76,16 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
     _verticalController.dispose();
     _photoController.dispose();
     super.dispose();
+  }
+
+  void _onMealChanged(int i) {
+    final old = _photoController;
+    setState(() {
+      _currentIndex = i;
+      _currentPhotoPage = 0;
+      _photoController = PageController();
+    });
+    old.dispose();
   }
 
   @override
@@ -96,12 +108,7 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
                       controller: _verticalController,
                       scrollDirection: Axis.horizontal,
                       itemCount: widget.mealIds.length,
-                      onPageChanged: (i) {
-                        setState(() {
-                          _currentIndex = i;
-                          _photoController = PageController();
-                        });
-                      },
+                      onPageChanged: _onMealChanged,
                       itemBuilder: (_, i) => _mealContent(widget.mealIds[i]),
                     )
                   : _mealContent(widget.mealIds.first),
@@ -299,12 +306,12 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
             child: PageView.builder(
               controller: _photoController,
               itemCount: urls.length,
-              itemBuilder: (_, i) => Image.network(
-                urls[i],
+              onPageChanged: (i) => setState(() => _currentPhotoPage = i),
+              itemBuilder: (_, i) => CachedNetworkImage(
+                imageUrl: urls[i],
                 fit: BoxFit.cover,
-                loadingBuilder: (_, child, progress) =>
-                    progress == null ? child : const Center(child: CircularProgressIndicator()),
-                errorBuilder: (_, __, ___) => Container(
+                placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+                errorWidget: (_, __, ___) => Container(
                   color: AppColors.grey100,
                   child: const Icon(Icons.broken_image_outlined, size: 48, color: AppColors.grey500),
                 ),
@@ -327,7 +334,7 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: i == 0 ? AppColors.white : AppColors.white.withValues(alpha: 0.5),
+                    color: i == _currentPhotoPage ? AppColors.white : AppColors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ),
