@@ -94,7 +94,7 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
               child: hasMultiple
                   ? PageView.builder(
                       controller: _verticalController,
-                      scrollDirection: Axis.vertical,
+                      scrollDirection: Axis.horizontal,
                       itemCount: widget.mealIds.length,
                       onPageChanged: (i) {
                         setState(() {
@@ -123,7 +123,14 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
             onPressed: () => Navigator.pop(context),
           ),
           if (widget.mealIds.length > 1)
-            Text('${_currentIndex + 1} / ${widget.mealIds.length}', style: AppTypography.s2),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chevron_left, size: 16, color: _currentIndex > 0 ? AppColors.textPrimary : AppColors.grey500),
+                Text('${_currentIndex + 1} / ${widget.mealIds.length}', style: AppTypography.s2),
+                Icon(Icons.chevron_right, size: 16, color: _currentIndex < widget.mealIds.length - 1 ? AppColors.textPrimary : AppColors.grey500),
+              ],
+            ),
           if (widget.canEdit)
             Row(
               mainAxisSize: MainAxisSize.min,

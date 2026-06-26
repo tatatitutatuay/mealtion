@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_client.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class MealDetail {
   final String id;
@@ -96,6 +97,8 @@ final mealDetailProvider = FutureProvider.family<MealDetail, String>((ref, mealI
 
 /// Fetch all meals for a specific date (used for calendar vertical swipe)
 final mealsByDateProvider = FutureProvider.family<List<MealDetail>, DateTime>((ref, date) async {
+  final auth = ref.watch(authProvider);
+  if (auth == null) return [];
   final supabase = ref.watch(supabaseProvider);
   final dateStr = date.toIso8601String().split('T')[0];
 
@@ -110,6 +113,7 @@ final mealsByDateProvider = FutureProvider.family<List<MealDetail>, DateTime>((r
         restaurants(id, name),
         branches(id, name)
       ''')
+      .eq('user_id', auth.id)
       .eq('date', dateStr)
       .order('time', ascending: true);
 
