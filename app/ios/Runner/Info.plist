@@ -49,6 +49,12 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Mealtion needs camera access to take photos of your meals.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Mealtion needs photo library access to select meal photos and profile pictures.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mealtion does not use the microphone, but this permission is required by the image picker.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
