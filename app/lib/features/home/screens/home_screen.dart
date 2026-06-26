@@ -22,7 +22,8 @@ class HomeScreen extends ConsumerWidget {
       body: dashboard.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
-        data: (data) => SingleChildScrollView(
+        data: (data) => SafeArea(
+          child: SingleChildScrollView(
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,6 +57,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 32),
             ],
           ),
+        ),
         ),
       ),
     );
