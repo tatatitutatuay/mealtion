@@ -294,14 +294,17 @@ Gaps identified by comparing Figma designs + spec against running app.
 [DONE] 11.1 Meal Detail → [DONE] 11.2 Meal Delete → [DONE] 10 Onboarding → [DONE] 8 Notifications → [DONE] 11.3 Friend Requests → [DONE] 11.4 Friend Profiles → [DONE] 9 Settings → [DONE] 11.5 Bookmark Actions
 ```
 
-**Remaining work (priority order):**
-1. 11.2.1/11.2.5 — Meal edit mode (needs photo URL→File download)
-2. 11.6 — Profile photo upload (image picker + avatars bucket)
-3. 11.7 — Restaurant search autocomplete
-4. 11.8 — Calendar indicator filters
-5. 11.9 — Draft meals (local storage)
-6. 11.10 — Tag autocomplete
-7. 11.11 — Price level calculation
-8. 11.3.6 — Unread badge on Add Friend icon
-9. 11.4.5 — View Profile button in own profile
-10. 11.5.5-11.5.6 — Collection edit/select mode
+**All remaining items completed (June 25, 2026):**
+- ✅ 11.2.1/11.2.5 — Meal edit mode (photo URL→File download, pre-fill all fields)
+- ✅ 11.6 — Profile photo upload (image picker + avatars bucket, migration 003)
+- ✅ 11.7 — Restaurant search autocomplete (DB search, suggestion box)
+- ✅ 11.8 — Calendar indicator filters (health/heaviness/feeling/price modes)
+- ✅ 11.9 — Draft meals (shared_preferences, resume via edit-note button)
+- ✅ 11.10 — Tag autocomplete (meal_tags DB search, ActionChips)
+- ✅ 11.11 — Price level calculation (user thresholds, colored badge in meal detail)
+- ✅ 11.3.6 — Unread badge on Add Friend icon (mail icon badge)
+- ✅ 11.4.5 — View Profile button in own profile (opens FriendProfileScreen)
+- ✅ 11.5.5-11.5.6 — Collection edit/select mode (batch delete + rename)
+
+**Quality Gate Setup:**
+- ✅ SonarCloud integration (CI workflow + local scan script)
