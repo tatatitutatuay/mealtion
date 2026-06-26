@@ -77,7 +77,7 @@ class _PriceInputState extends State<PriceInput> {
                 child: Text(level, style: TextStyle(color: _levelColor(level), fontSize: 12)),
               ),
               const SizedBox(width: 8),
-              Text('Based on your thresholds', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
+              const Text('Based on your thresholds', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
             ],
           ),
         ],

@@ -91,7 +91,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Comment', style: AppTypography.s1),
+                    const Text('Comment', style: AppTypography.s1),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
@@ -141,7 +141,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                                             const Spacer(),
                                             GestureDetector(
                                               onTap: () => _delete(c.id),
-                                              child: Icon(Icons.delete_outline, size: 16, color: AppColors.grey500),
+                                              child: const Icon(Icons.delete_outline, size: 16, color: AppColors.grey500),
                                             ),
                                           ],
                                         ],

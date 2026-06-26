@@ -48,7 +48,7 @@ class PhotoPicker extends StatelessWidget {
               border: Border.all(color: AppColors.grey100),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Center(
+            child: const Center(
               child: Text(
                 'Add at least 1 photo',
                 style: TextStyle(color: AppColors.grey500),
@@ -108,7 +108,7 @@ class PhotoPicker extends StatelessWidget {
             ),
           ),
         if (photos.isNotEmpty)
-          Text('First photo is the cover. Drag to reorder.',
+          const Text('First photo is the cover. Drag to reorder.',
               style: TextStyle(color: AppColors.grey500, fontSize: 12)),
       ],
     );

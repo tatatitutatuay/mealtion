@@ -129,23 +129,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           _section('Price Display Privacy'),
-          RadioListTile<String>(
-            value: 'actual',
+          RadioGroup<String>(
             groupValue: _pricePrivacy,
             onChanged: (v) => _savePricePrivacy(v!),
-            title: const Text('Show actual price'),
-          ),
-          RadioListTile<String>(
-            value: 'level',
-            groupValue: _pricePrivacy,
-            onChanged: (v) => _savePricePrivacy(v!),
-            title: const Text('Show price level only'),
-          ),
-          RadioListTile<String>(
-            value: 'hidden',
-            groupValue: _pricePrivacy,
-            onChanged: (v) => _savePricePrivacy(v!),
-            title: const Text('Hide price'),
+            child: const Column(
+              children: [
+                RadioListTile<String>(
+                  value: 'actual',
+                  title: Text('Show actual price'),
+                ),
+                RadioListTile<String>(
+                  value: 'level',
+                  title: Text('Show price level only'),
+                ),
+                RadioListTile<String>(
+                  value: 'hidden',
+                  title: Text('Hide price'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           _section('Notifications'),

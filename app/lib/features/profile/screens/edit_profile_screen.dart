@@ -165,7 +165,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Display Name', style: AppTypography.s2),
+            const Text('Display Name', style: AppTypography.s2),
             const SizedBox(height: 8),
             TextField(
               controller: _displayNameController,
@@ -173,7 +173,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               decoration: const InputDecoration(hintText: 'Your display name'),
             ),
             const SizedBox(height: 16),
-            Text('Username', style: AppTypography.s2),
+            const Text('Username', style: AppTypography.s2),
             const SizedBox(height: 8),
             TextField(
               controller: _usernameController,
@@ -181,7 +181,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               decoration: const InputDecoration(hintText: 'your_username', prefixText: '@'),
             ),
             const SizedBox(height: 16),
-            Text('Bio', style: AppTypography.s2),
+            const Text('Bio', style: AppTypography.s2),
             const SizedBox(height: 8),
             TextField(
               controller: _bioController,

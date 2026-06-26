@@ -124,8 +124,8 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.delete_outline, color: AppColors.error),
-              title: Text('Delete Collection', style: TextStyle(color: AppColors.error)),
+              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+              title: const Text('Delete Collection', style: TextStyle(color: AppColors.error)),
               onTap: () async {
                 Navigator.pop(ctx);
                 final confirmed = await showDialog<bool>(

@@ -479,8 +479,8 @@ class _CollectionSelectorSheet extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
+          const Padding(
+            padding: EdgeInsets.all(16),
             child: Text('Save to collection', style: AppTypography.s2),
           ),
           const Divider(height: 1),

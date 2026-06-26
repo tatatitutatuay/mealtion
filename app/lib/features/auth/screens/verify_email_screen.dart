@@ -67,7 +67,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
             Text(
               'We sent a verification link to ${widget.email}',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
             TextField(

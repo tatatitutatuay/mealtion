@@ -68,7 +68,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         children: [
           Row(
             children: [
-              Text('Gallery', style: AppTypography.h5),
+              const Text('Gallery', style: AppTypography.h5),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.bookmark_border_outlined),

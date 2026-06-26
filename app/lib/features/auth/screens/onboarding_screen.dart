@@ -88,9 +88,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Profile Identity', style: AppTypography.h5),
+          const Text('Profile Identity', style: AppTypography.h5),
           const SizedBox(height: 24),
-          Text('Display Name', style: AppTypography.b4),
+          const Text('Display Name', style: AppTypography.b4),
           const SizedBox(height: 8),
           TextField(
             controller: _displayNameController,
@@ -100,7 +100,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Username', style: AppTypography.b4),
+          const Text('Username', style: AppTypography.b4),
           const SizedBox(height: 8),
           TextField(
             controller: _usernameController,
@@ -121,9 +121,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Profile Information', style: AppTypography.h5),
+          const Text('Profile Information', style: AppTypography.h5),
           const SizedBox(height: 24),
-          Text('Bio', style: AppTypography.b4),
+          const Text('Bio', style: AppTypography.b4),
           const SizedBox(height: 8),
           TextField(
             controller: _bioController,
@@ -145,9 +145,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Currency', style: AppTypography.h5),
+          const Text('Currency', style: AppTypography.h5),
           const SizedBox(height: 24),
-          Text('Select your primary currency', style: AppTypography.b4),
+          const Text('Select your primary currency', style: AppTypography.b4),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
@@ -184,11 +184,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Price Thresholds', style: AppTypography.h5),
+          const Text('Price Thresholds', style: AppTypography.h5),
           const SizedBox(height: 24),
-          Text('Meals below the low threshold are Affordable. Above the high threshold are Expensive.', style: AppTypography.b4),
+          const Text('Meals below the low threshold are Affordable. Above the high threshold are Expensive.', style: AppTypography.b4),
           const SizedBox(height: 16),
-          Text('Affordable below', style: AppTypography.b4),
+          const Text('Affordable below', style: AppTypography.b4),
           const SizedBox(height: 8),
           TextField(
             controller: _thresholdLowController,
@@ -199,7 +199,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Expensive above', style: AppTypography.b4),
+          const Text('Expensive above', style: AppTypography.b4),
           const SizedBox(height: 8),
           TextField(
             controller: _thresholdHighController,
@@ -220,7 +220,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Permissions', style: AppTypography.h5),
+          const Text('Permissions', style: AppTypography.h5),
           const SizedBox(height: 24),
           _permissionItem(Icons.photo_library_outlined, 'Photo Library', 'Access your photos to add meal pictures'),
           _permissionItem(Icons.camera_alt_outlined, 'Camera', 'Take photos of your meals'),

@@ -114,7 +114,7 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.layoutMargin),
           children: [
-            Text('Base', style: AppTypography.s2),
+            const Text('Base', style: AppTypography.s2),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -132,7 +132,7 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
               ],
             ),
             const SizedBox(height: 32),
-            Text('Your', style: AppTypography.s2),
+            const Text('Your', style: AppTypography.s2),
             const SizedBox(height: 12),
             collections.when(
               loading: () => const Center(child: CircularProgressIndicator()),
