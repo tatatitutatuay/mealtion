@@ -505,7 +505,7 @@ class _CollectionSelectorSheet extends ConsumerWidget {
               if (name == null || !context.mounted) return;
               try {
                 final id = await ref.read(bookmarkActionsProvider).createCollection(name);
-                if (context.mounted) Navigator.pop(context, id);
+                if (context.mounted) Navigator.pop(context, (collectionId: id, alreadySaved: false));
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
@@ -522,7 +522,7 @@ class _CollectionSelectorSheet extends ConsumerWidget {
               title: Text(c.name),
               subtitle: Text('${c.itemCount} items'),
               trailing: alreadySaved ? const Icon(Icons.check, color: AppColors.primary) : null,
-              onTap: () => Navigator.pop(context, c.id),
+              onTap: () => Navigator.pop(context, (collectionId: c.id, alreadySaved: alreadySaved)),
             );
           }),
           if (collections.isEmpty)
