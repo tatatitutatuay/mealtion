@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Mealtion needs camera access so you can take photos of your meals.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Mealtion needs photo library access so you can pick photos of your meals.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

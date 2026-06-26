@@ -69,6 +69,26 @@ $env:ANDROID_HOME = "C:\Users\aitsa\AppData\Local\Android\Sdk"
 - **Build web**: `flutter build web --debug`
 - **Emulator**: `MealtionPixel` (Pixel 7, Android API 36, google_apis x86_64)
 
+### macOS / iOS
+
+Flutter installed via Homebrew (`/opt/homebrew/bin/flutter`, 3.44.4 stable). CocoaPods via Homebrew (1.16.2). Xcode 26.6. iOS project uses **Swift Package Manager** (not CocoaPods) — no Podfile needed.
+
+- **Analyze**: `flutter analyze` (from `app/` directory)
+- **Run on iOS simulator**:
+  ```bash
+  cd app
+  xcrun simctl boot "iPhone 17" 2>/dev/null; open -a Simulator
+  flutter run
+  ```
+  `flutter run` auto-detects the booted simulator. If none is booted, it prompts to pick one.
+- **Simulator**: iPhone 17 (iOS 26.5, build 23F77). Device UDID: `B71ADFAD-F7A3-4B55-9C45-58E6D154422A`
+- **Build iOS**: `flutter build ios --debug` (from `app/`)
+- **One-time setup notes** (already done on this machine):
+  - Accept Xcode license: `sudo xcodebuild -license accept`
+  - Install iOS simulator runtime: `xcodebuild -downloadPlatform iOS` (downloads ~8.5 GB)
+  - `app/.env` must exist with `SUPABASE_URL` + `SUPABASE_ANON_KEY` (gitignored, not in repo)
+  - `ios/Runner/Info.plist` has `NSCameraUsageDescription` + `NSPhotoLibraryUsageDescription` (required for `image_picker`)
+
 ## 5b. SonarCloud (Code Quality)
 
 - **Dashboard**: https://sonarcloud.io/project/overview?id=tatatitutatuay_mealtion
