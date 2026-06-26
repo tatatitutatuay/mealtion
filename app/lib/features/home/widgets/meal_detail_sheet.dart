@@ -37,6 +37,9 @@ class MealDetailSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) => MealDetailSheet(mealIds: [mealId], canEdit: canEdit),
     );
   }
@@ -49,6 +52,9 @@ class MealDetailSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) => MealDetailSheet(mealIds: mealIds, initialIndex: initialIndex, canEdit: canEdit),
     );
   }
@@ -58,114 +64,28 @@ class MealDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
-  late PageController _verticalController;
-  late int _currentIndex;
-  late PageController _photoController;
-  int _currentPhotoPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _verticalController = PageController(initialPage: widget.initialIndex);
-    _photoController = PageController();
-  }
-
-  @override
-  void dispose() {
-    _verticalController.dispose();
-    _photoController.dispose();
-    super.dispose();
-  }
-
-  void _onMealChanged(int i) {
-    final old = _photoController;
-    setState(() {
-      _currentIndex = i;
-      _currentPhotoPage = 0;
-      _photoController = PageController();
-    });
-    old.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final hasMultiple = widget.mealIds.length > 1;
-
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) {
-        return Column(
-          children: [
-            _header(),
-            const Divider(height: 1),
-            Expanded(
-              child: hasMultiple
-                  ? PageView.builder(
-                      controller: _verticalController,
-                      scrollDirection: Axis.horizontal,
-                      itemCount: widget.mealIds.length,
-                      onPageChanged: _onMealChanged,
-                      itemBuilder: (_, i) => _mealContent(widget.mealIds[i]),
-                    )
-                  : _mealContent(widget.mealIds.first),
-            ),
-          ],
+        return _MealDetailBody(
+          mealIds: widget.mealIds,
+          initialIndex: widget.initialIndex,
+          canEdit: widget.canEdit,
+          scrollController: scrollController,
+          onShowCollectionSelector: _showCollectionSelector,
+          onConfirmDelete: _confirmDelete,
+          onEdit: (mealId) {
+            Navigator.pop(context);
+            AddMealSheet.show(context, mealId: mealId);
+          },
+          onClose: () => Navigator.pop(context),
         );
       },
-    );
-  }
-
-  Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
-          ),
-          if (widget.mealIds.length > 1)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.chevron_left, size: 16, color: _currentIndex > 0 ? AppColors.textPrimary : AppColors.grey500),
-                Text('${_currentIndex + 1} / ${widget.mealIds.length}', style: AppTypography.s2),
-                Icon(Icons.chevron_right, size: 16, color: _currentIndex < widget.mealIds.length - 1 ? AppColors.textPrimary : AppColors.grey500),
-              ],
-            ),
-          if (widget.canEdit)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.bookmark_add_outlined),
-                  onPressed: () => _showCollectionSelector(widget.mealIds[_currentIndex]),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                  onPressed: () => _confirmDelete(widget.mealIds[_currentIndex]),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    AddMealSheet.show(context, mealId: widget.mealIds[_currentIndex]);
-                  },
-                ),
-              ],
-            ),
-          if (!widget.canEdit)
-            IconButton(
-              icon: const Icon(Icons.bookmark_add_outlined),
-              onPressed: () => _showCollectionSelector(widget.mealIds[_currentIndex]),
-            ),
-        ],
-      ),
     );
   }
 
@@ -244,43 +164,220 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
     }
   }
 
-  Widget _mealContent(String mealId) {
+}
+
+/// Contains the header + meal PageView. Extracted into its own StatefulWidget
+/// so it survives DraggableScrollableSheet builder rebuilds without resetting
+/// the spinner animation.
+class _MealDetailBody extends ConsumerStatefulWidget {
+  final List<String> mealIds;
+  final int initialIndex;
+  final bool canEdit;
+  final ScrollController scrollController;
+  final void Function(String mealId) onShowCollectionSelector;
+  final void Function(String mealId) onConfirmDelete;
+  final void Function(String mealId) onEdit;
+  final VoidCallback onClose;
+
+  const _MealDetailBody({
+    required this.mealIds,
+    required this.initialIndex,
+    required this.canEdit,
+    required this.scrollController,
+    required this.onShowCollectionSelector,
+    required this.onConfirmDelete,
+    required this.onEdit,
+    required this.onClose,
+  });
+
+  @override
+  ConsumerState<_MealDetailBody> createState() => _MealDetailBodyState();
+}
+
+class _MealDetailBodyState extends ConsumerState<_MealDetailBody> {
+  late PageController _verticalController;
+  late int _currentIndex;
+  late PageController _photoController;
+  int _currentPhotoPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _verticalController = PageController(initialPage: widget.initialIndex);
+    _photoController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    _photoController.dispose();
+    super.dispose();
+  }
+
+  void _onMealChanged(int i) {
+    final old = _photoController;
+    setState(() {
+      _currentIndex = i;
+      _currentPhotoPage = 0;
+      _photoController = PageController();
+    });
+    old.dispose();
+    if (i + 1 < widget.mealIds.length) {
+      ref.read(mealDetailProvider(widget.mealIds[i + 1]).future);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasMultiple = widget.mealIds.length > 1;
+
+    return Column(
+      children: [
+        _header(),
+        const Divider(height: 1),
+        Expanded(
+          child: hasMultiple
+              ? PageView.builder(
+                  controller: _verticalController,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.mealIds.length,
+                  onPageChanged: _onMealChanged,
+                  itemBuilder: (_, i) => _MealContent(
+                    key: ValueKey(widget.mealIds[i]),
+                    mealId: widget.mealIds[i],
+                    scrollController: i == _currentIndex ? widget.scrollController : null,
+                    photoController: i == _currentIndex ? _photoController : null,
+                    currentPhotoPage: i == _currentIndex ? _currentPhotoPage : 0,
+                    onPhotoPageChanged: i == _currentIndex
+                        ? (p) => setState(() => _currentPhotoPage = p)
+                        : null,
+                  ),
+                )
+              : _MealContent(
+                  key: ValueKey(widget.mealIds.first),
+                  mealId: widget.mealIds.first,
+                  scrollController: widget.scrollController,
+                  photoController: _photoController,
+                  currentPhotoPage: _currentPhotoPage,
+                  onPhotoPageChanged: (p) => setState(() => _currentPhotoPage = p),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _header() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: widget.onClose,
+          ),
+          if (widget.mealIds.length > 1)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chevron_left, size: 16, color: _currentIndex > 0 ? AppColors.textPrimary : AppColors.grey500),
+                Text('${_currentIndex + 1} / ${widget.mealIds.length}', style: AppTypography.s2),
+                Icon(Icons.chevron_right, size: 16, color: _currentIndex < widget.mealIds.length - 1 ? AppColors.textPrimary : AppColors.grey500),
+              ],
+            ),
+          if (widget.canEdit)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  onPressed: () => widget.onShowCollectionSelector(widget.mealIds[_currentIndex]),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                  onPressed: () => widget.onConfirmDelete(widget.mealIds[_currentIndex]),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => widget.onEdit(widget.mealIds[_currentIndex]),
+                ),
+              ],
+            ),
+          if (!widget.canEdit)
+            IconButton(
+              icon: const Icon(Icons.bookmark_add_outlined),
+              onPressed: () => widget.onShowCollectionSelector(widget.mealIds[_currentIndex]),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Extracted widget so the spinner doesn't restart on parent rebuilds
+class _MealContent extends ConsumerWidget {
+  final String mealId;
+  final ScrollController? scrollController;
+  final PageController? photoController;
+  final int currentPhotoPage;
+  final ValueChanged<int>? onPhotoPageChanged;
+
+  const _MealContent({
+    super.key,
+    required this.mealId,
+    this.scrollController,
+    this.photoController,
+    this.currentPhotoPage = 0,
+    this.onPhotoPageChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(mealDetailProvider(mealId));
 
     return detail.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
-      data: (meal) => ListView(
-        padding: const EdgeInsets.all(AppSpacing.layoutMargin),
-        children: [
-          _photoCarousel(meal.photoUrls),
-          const SizedBox(height: 16),
-          _dateTimeRow(meal),
-          const SizedBox(height: 8),
-          _foodsRow(meal.foods),
-          if (meal.restaurantName != null) ...[
-            const SizedBox(height: 8),
-            _infoRow(Icons.place_outlined, [
-              if (meal.restaurantName != null) meal.restaurantName!,
-              if (meal.branchName != null) meal.branchName!,
-            ].join(' · ')),
-          ],
-          if (meal.tags.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _tagsRow(meal.tags),
-          ],
-          if (meal.price != null) ...[
-            const SizedBox(height: 8),
-            _priceRow(meal.price!),
-          ],
-          const SizedBox(height: 8),
-          _chipsRow(meal.heaviness, meal.feeling),
-          if (meal.note != null && meal.note!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _noteSection(meal.note!),
-          ],
-          const SizedBox(height: 32),
-        ],
+      data: (meal) => TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 250),
+        tween: Tween(begin: 0.0, end: 1.0),
+        builder: (context, opacity, _) => Opacity(
+          opacity: opacity,
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(AppSpacing.layoutMargin),
+            children: [
+              _photoCarousel(meal.photoUrls),
+              const SizedBox(height: 16),
+              _dateTimeRow(meal),
+              const SizedBox(height: 8),
+              _foodsRow(meal.foods),
+              if (meal.restaurantName != null) ...[
+                const SizedBox(height: 8),
+                _infoRow(Icons.place_outlined, [
+                  if (meal.restaurantName != null) meal.restaurantName!,
+                  if (meal.branchName != null) meal.branchName!,
+                ].join(' · ')),
+              ],
+              if (meal.tags.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _tagsRow(meal.tags),
+              ],
+              if (meal.price != null) ...[
+                const SizedBox(height: 8),
+                _priceRow(meal.price!, ref),
+              ],
+              const SizedBox(height: 8),
+              _chipsRow(meal.heaviness, meal.feeling),
+              if (meal.note != null && meal.note!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _noteSection(meal.note!),
+              ],
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -304,9 +401,9 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
           child: SizedBox(
             height: 300,
             child: PageView.builder(
-              controller: _photoController,
+              controller: photoController,
               itemCount: urls.length,
-              onPageChanged: (i) => setState(() => _currentPhotoPage = i),
+              onPageChanged: onPhotoPageChanged,
               itemBuilder: (_, i) => CachedNetworkImage(
                 imageUrl: urls[i],
                 fit: BoxFit.cover,
@@ -334,7 +431,7 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: i == _currentPhotoPage ? AppColors.white : AppColors.white.withValues(alpha: 0.5),
+                    color: i == currentPhotoPage ? AppColors.white : AppColors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -402,7 +499,7 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
     );
   }
 
-  Widget _priceRow(double price) {
+  Widget _priceRow(double price, WidgetRef ref) {
     final auth = ref.read(authProvider);
     final level = calculatePriceLevel(
       price,
