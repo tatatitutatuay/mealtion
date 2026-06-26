@@ -156,14 +156,11 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
   }
 
   void _showCollectionSelector(String mealId) async {
-    final collections = ref.read(bookmarkCollectionsProvider).valueOrNull ?? [];
-
     final selected = await showModalBottomSheet<({String collectionId, bool alreadySaved})>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => _CollectionSelectorSheet(
         mealId: mealId,
-        collections: collections,
         onCreate: () async {
           final name = await showDialog<String>(
             context: ctx,
@@ -480,14 +477,22 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
 
 class _CollectionSelectorSheet extends ConsumerWidget {
   final String mealId;
-  final List<BookmarkCollection> collections;
   final Future<String?> Function() onCreate;
 
-  const _CollectionSelectorSheet({required this.mealId, required this.collections, required this.onCreate});
+  const _CollectionSelectorSheet({
+    required this.mealId,
+    required this.onCreate,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final existingIds = ref.watch(mealCollectionIdsProvider(mealId)).valueOrNull ?? {};
+    final collectionsAsync = ref.watch(bookmarkCollectionsProvider);
+    final existingIdsAsync = ref.watch(mealCollectionIdsProvider(mealId));
+
+    final collections = collectionsAsync.valueOrNull ?? <BookmarkCollection>[];
+    final existingIds = existingIdsAsync.valueOrNull ?? <String>{};
+    final isLoading = collectionsAsync.isLoading && collections.isEmpty;
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -514,22 +519,29 @@ class _CollectionSelectorSheet extends ConsumerWidget {
             },
           ),
           const Divider(height: 1),
-          ...collections.map((c) {
-            final alreadySaved = existingIds.contains(c.id);
-            return ListTile(
-              leading: Icon(alreadySaved ? Icons.bookmark : Icons.bookmark_outline,
-                  color: alreadySaved ? AppColors.primary : null),
-              title: Text(c.name),
-              subtitle: Text('${c.itemCount} items'),
-              trailing: alreadySaved ? const Icon(Icons.check, color: AppColors.primary) : null,
-              onTap: () => Navigator.pop(context, (collectionId: c.id, alreadySaved: alreadySaved)),
-            );
-          }),
-          if (collections.isEmpty)
+          if (isLoading)
             const Padding(
               padding: EdgeInsets.all(24),
-              child: Text('No collections yet. Create one!', style: AppTypography.b4),
-            ),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else ...[
+            ...collections.map((c) {
+              final alreadySaved = existingIds.contains(c.id);
+              return ListTile(
+                leading: Icon(alreadySaved ? Icons.bookmark : Icons.bookmark_outline,
+                    color: alreadySaved ? AppColors.primary : null),
+                title: Text(c.name),
+                subtitle: Text('${c.itemCount} items'),
+                trailing: alreadySaved ? const Icon(Icons.check, color: AppColors.primary) : null,
+                onTap: () => Navigator.pop(context, (collectionId: c.id, alreadySaved: alreadySaved)),
+              );
+            }),
+            if (collections.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('No collections yet. Create one!', style: AppTypography.b4),
+              ),
+          ],
         ],
       ),
     );

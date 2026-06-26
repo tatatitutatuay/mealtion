@@ -85,8 +85,8 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
                   ? () {
                       final id = _selected.first;
                       final list = collections.valueOrNull ?? [];
-                      final col = list.firstWhere((c) => c.id == id);
-                      _renameCollection(col);
+                      final col = list.where((c) => c.id == id).firstOrNull;
+                      if (col != null) _renameCollection(col);
                     }
                   : null,
             ),

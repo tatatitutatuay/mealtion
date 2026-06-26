@@ -30,10 +30,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     final profile = ref.read(myProfileProvider).valueOrNull;
-    _displayNameController = TextEditingController(text: profile?.displayName ?? '');
-    _usernameController = TextEditingController(text: profile?.username ?? '');
+    final auth = ref.read(authProvider);
+    _displayNameController = TextEditingController(text: profile?.displayName ?? auth?.displayName ?? '');
+    _usernameController = TextEditingController(text: profile?.username ?? auth?.username ?? '');
     _bioController = TextEditingController(text: profile?.bio ?? '');
-    _photoUrl = (profile?.photoUrl ?? '').isNotEmpty ? profile!.photoUrl : null;
+    _photoUrl = (profile?.photoUrl ?? auth?.photoUrl ?? '').isNotEmpty
+        ? (profile?.photoUrl ?? auth?.photoUrl)
+        : null;
   }
 
   @override
