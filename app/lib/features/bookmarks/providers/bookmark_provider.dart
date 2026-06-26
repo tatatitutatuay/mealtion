@@ -122,20 +122,17 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
       .from('meal_foods')
       .select('''
         food_name,
-        meals!inner(id, user_id, date),
-        meals.meal_photos(id, storage_path, sort_order)
+        meals!inner(id, user_id, date, meal_photos(id, storage_path, sort_order))
       ''')
-      .eq('meals.user_id', auth.id)
-      .order('meals.date', ascending: false);
+      .eq('meals.user_id', auth.id);
 
   final grouped = <String, BaseBookmarkItem>{};
   for (final row in (rows as List<dynamic>).cast<Map<String, dynamic>>()) {
     final name = row['food_name'] as String;
-    final meals = row['meals'] as List<dynamic>?;
-    if (meals == null || meals.isEmpty) continue;
+    final meal = row['meals'] as Map<String, dynamic>?;
+    if (meal == null) continue;
 
-    final firstMeal = meals.first as Map<String, dynamic>;
-    final photos = (firstMeal['meal_photos'] as List<dynamic>?)
+    final photos = (meal['meal_photos'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
         .where((p) => p['storage_path'] != null)
         .toList() ?? [];
