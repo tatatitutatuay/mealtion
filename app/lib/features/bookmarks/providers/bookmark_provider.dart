@@ -42,7 +42,13 @@ final bookmarkCollectionsProvider = FutureProvider<List<BookmarkCollection>>((re
       .from('bookmark_collections')
       .select('''
         id, name, cover_key,
-        bookmark_items(id)
+        bookmark_items(
+          id,
+          meals!inner(
+            id, date,
+            meal_photos(id, storage_path, sort_order)
+          )
+        )
       ''')
       .eq('user_id', auth.id)
       .order('created_at', ascending: false);
@@ -51,10 +57,34 @@ final bookmarkCollectionsProvider = FutureProvider<List<BookmarkCollection>>((re
       .cast<Map<String, dynamic>>()
       .map((r) {
         final items = (r['bookmark_items'] as List<dynamic>?) ?? [];
+
+        // Find the latest meal's photo as cover
+        String? coverUrl;
+        if (r['cover_key'] != null) {
+          coverUrl = r['cover_key'] as String?;
+        } else {
+          String? latestDate;
+          for (final item in items) {
+            final meal = (item as Map<String, dynamic>)['meals'] as Map<String, dynamic>?;
+            if (meal == null) continue;
+            final mealDate = meal['date'] as String;
+            if (latestDate == null || mealDate.compareTo(latestDate) > 0) {
+              latestDate = mealDate;
+              final photos = (meal['meal_photos'] as List<dynamic>?)
+                  ?.cast<Map<String, dynamic>>()
+                  .where((p) => p['storage_path'] != null)
+                  .toList();
+              if (photos != null && photos.isNotEmpty) {
+                coverUrl = resolvePhotoUrl(supabase, photos.first['storage_path'] as String);
+              }
+            }
+          }
+        }
+
         return BookmarkCollection(
           id: r['id'] as String,
           name: r['name'] as String,
-          coverKey: r['cover_key'] as String?,
+          coverKey: coverUrl,
           itemCount: items.length,
         );
       })
