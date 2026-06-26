@@ -22,12 +22,14 @@ class BaseBookmarkItem {
   final String? subtitle;
   final String? thumbnailUrl;
   final int mealCount;
+  final List<String> mealIds;
 
   BaseBookmarkItem({
     required this.name,
     this.subtitle,
     this.thumbnailUrl,
     this.mealCount = 0,
+    this.mealIds = const [],
   });
 }
 
@@ -67,6 +69,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
   final rows = await supabase
       .from('meals')
       .select('''
+        id,
         restaurants(id, name),
         branches(id, name),
         meal_photos(id, storage_path, sort_order)
@@ -84,6 +87,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
     final name = restaurant['name'] as String;
     final branchName = branch?['name'] as String?;
     final key = '$name|${branchName ?? ''}';
+    final mealId = row['id'] as String;
 
     final photos = (row['meal_photos'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
@@ -97,6 +101,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
         subtitle: existing.subtitle,
         thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null),
         mealCount: existing.mealCount + 1,
+        mealIds: [...existing.mealIds, mealId],
       );
     } else {
       grouped[key] = BaseBookmarkItem(
@@ -104,6 +109,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
         subtitle: branchName,
         thumbnailUrl: photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null,
         mealCount: 1,
+        mealIds: [mealId],
       );
     }
   }
@@ -143,12 +149,14 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
         name: existing.name,
         thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null),
         mealCount: existing.mealCount + 1,
+        mealIds: [...existing.mealIds, meal['id'] as String],
       );
     } else {
       grouped[name] = BaseBookmarkItem(
         name: name,
         thumbnailUrl: photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null,
         mealCount: 1,
+        mealIds: [meal['id'] as String],
       );
     }
   }

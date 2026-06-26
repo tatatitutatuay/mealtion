@@ -4,6 +4,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/bookmark_provider.dart';
+import '../../home/widgets/meal_detail_sheet.dart';
 
 class BaseBookmarkDetailScreen extends ConsumerWidget {
   final String category;
@@ -71,7 +72,7 @@ class BaseBookmarkDetailScreen extends ConsumerWidget {
                         children: [
                           Text(letter, style: AppTypography.s2.copyWith(color: AppColors.textSecondary)),
                           const Divider(height: 8),
-                          ...group.map((item) => _itemRow(item)),
+                          ...group.map((item) => _itemRow(context, item)),
                           const SizedBox(height: 16),
                         ],
                       );
@@ -86,39 +87,49 @@ class BaseBookmarkDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _itemRow(BaseBookmarkItem item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: item.thumbnailUrl != null
-                ? Image.network(item.thumbnailUrl!, width: 40, height: 40, fit: BoxFit.cover)
-                : Container(
-                    width: 40,
-                    height: 40,
-                    color: AppColors.grey100,
-                    child: Icon(
-                      category == 'Place' ? Icons.place_outlined : Icons.restaurant_outlined,
-                      size: 20,
-                      color: AppColors.grey500,
+  Widget _itemRow(BuildContext context, BaseBookmarkItem item) {
+    return GestureDetector(
+      onTap: () {
+        if (item.mealIds.length == 1) {
+          MealDetailSheet.show(context, item.mealIds.first);
+        } else {
+          MealDetailSheet.showMultiple(context, item.mealIds);
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: item.thumbnailUrl != null
+                  ? Image.network(item.thumbnailUrl!, width: 40, height: 40, fit: BoxFit.cover)
+                  : Container(
+                      width: 40,
+                      height: 40,
+                      color: AppColors.grey100,
+                      child: Icon(
+                        category == 'Place' ? Icons.place_outlined : Icons.restaurant_outlined,
+                        size: 20,
+                        color: AppColors.grey500,
+                      ),
                     ),
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.name, style: AppTypography.b4),
-                if (item.subtitle != null)
-                  Text(item.subtitle!, style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-              ],
             ),
-          ),
-          Text('${item.mealCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.name, style: AppTypography.b4),
+                  if (item.subtitle != null)
+                    Text(item.subtitle!, style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            Text('${item.mealCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+          ],
+        ),
       ),
     );
   }

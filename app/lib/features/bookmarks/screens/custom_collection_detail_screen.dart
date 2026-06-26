@@ -4,6 +4,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/bookmark_provider.dart';
+import '../../home/widgets/meal_detail_sheet.dart';
 
 class CustomCollectionDetailScreen extends ConsumerWidget {
   final String collectionId;
@@ -67,7 +68,7 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
                       mainAxisSpacing: 4,
                     ),
                     itemCount: list.length,
-                    itemBuilder: (_, i) => _gridTile(list[i]),
+                    itemBuilder: (_, i) => _gridTile(context, list[i], list.map((m) => m.mealId).toList(), i),
                   );
                 },
               ),
@@ -78,24 +79,27 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _gridTile(CollectionMeal meal) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(meal.thumbnailUrl, fit: BoxFit.cover),
-          if (meal.photoCount > 1)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                child: const Icon(Icons.collections, color: AppColors.white, size: 12),
+  Widget _gridTile(BuildContext context, CollectionMeal meal, List<String> allMealIds, int index) {
+    return GestureDetector(
+      onTap: () => MealDetailSheet.showMultiple(context, allMealIds, initialIndex: index),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(meal.thumbnailUrl, fit: BoxFit.cover),
+            if (meal.photoCount > 1)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  child: const Icon(Icons.collections, color: AppColors.white, size: 12),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
