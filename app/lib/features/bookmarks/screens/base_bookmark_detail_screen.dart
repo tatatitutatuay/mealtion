@@ -19,9 +19,6 @@ class BaseBookmarkDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bookmark'),
-        actions: [
-          IconButton(icon: const Icon(Icons.more_horiz), onPressed: () {}),
-        ],
       ),
       body: SafeArea(
         child: Column(

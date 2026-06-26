@@ -113,18 +113,10 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit Collection'),
+              title: const Text('Rename Collection'),
               onTap: () {
                 Navigator.pop(ctx);
-                // TODO: edit collection name
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.select_all_outlined),
-              title: const Text('Select Items'),
-              onTap: () {
-                Navigator.pop(ctx);
-                // TODO: select items mode
+                _renameCollection(context, ref);
               },
             ),
             ListTile(
@@ -154,7 +146,7 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
                     if (context.mounted) Navigator.pop(context);
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
                     }
                   }
                 }
@@ -163,6 +155,115 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _renameCollection(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _RenameCollectionDialog(
+        collectionId: collectionId,
+        name: collectionName,
+        ref: ref,
+        onRenamed: () {
+          ref.invalidate(bookmarkCollectionsProvider);
+          ref.invalidate(collectionMealsProvider(collectionId));
+        },
+      ),
+    );
+  }
+}
+
+class _RenameCollectionDialog extends StatefulWidget {
+  final String collectionId;
+  final String name;
+  final WidgetRef ref;
+  final VoidCallback onRenamed;
+
+  const _RenameCollectionDialog({
+    required this.collectionId,
+    required this.name,
+    required this.ref,
+    required this.onRenamed,
+  });
+
+  @override
+  State<_RenameCollectionDialog> createState() => _RenameCollectionDialogState();
+}
+
+class _RenameCollectionDialogState extends State<_RenameCollectionDialog> {
+  late final TextEditingController _controller;
+  String? _error;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    _controller = TextEditingController(text: widget.name);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final newName = _controller.text.trim();
+    if (newName.isEmpty || newName == widget.name) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await widget.ref.read(bookmarkActionsProvider).renameCollection(widget.collectionId, newName);
+      widget.onRenamed();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Rename Collection'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Collection name'),
+            onSubmitted: (_) => _submit(),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: _isSaving ? null : _submit,
+          child: _isSaving
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Save'),
+        ),
+      ],
     );
   }
 }
