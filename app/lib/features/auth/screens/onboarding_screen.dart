@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
@@ -310,7 +309,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         'price_threshold_high': high,
         'onboarding_completed': true,
       }).eq('id', userId);
-      debugPrint('Onboarding: profile updated, refreshing auth state');
 
       // Refresh auth state — triggers router redirect
       ref.read(authProvider.notifier).state = ref.read(authProvider)!.copyWith(
@@ -318,7 +316,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             username: _usernameController.text.trim().isEmpty ? null : _usernameController.text.trim(),
             onboardingCompleted: true,
           );
-      debugPrint('Onboarding: auth state updated, router should redirect');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));

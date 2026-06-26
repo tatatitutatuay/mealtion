@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/shadows.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/utils/price_level.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/home_data.dart';
 import 'meal_detail_sheet.dart';
 
-class RecentEntries extends StatelessWidget {
+class RecentEntries extends ConsumerWidget {
   final List<HomeMealEntry> meals;
 
   const RecentEntries({super.key, required this.meals});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
       child: Column(
@@ -22,14 +25,14 @@ class RecentEntries extends StatelessWidget {
           const SizedBox(height: 12),
           ...meals.map((meal) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _mealCard(context, meal),
+            child: _mealCard(context, ref, meal),
           )),
         ],
       ),
     );
   }
 
-  Widget _mealCard(BuildContext context, HomeMealEntry meal) {
+  Widget _mealCard(BuildContext context, WidgetRef ref, HomeMealEntry meal) {
     return GestureDetector(
       onTap: () => MealDetailSheet.show(context, meal.id),
       child: Container(
@@ -78,9 +81,12 @@ class RecentEntries extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      if (meal.price != null)
+                      if (meal.price != null) ...[
                         Text('${meal.price!.toStringAsFixed(0)} ฿',
                             style: AppTypography.b6.copyWith(color: AppColors.textPrimary)),
+                        const SizedBox(width: 4),
+                        _priceLevelBadge(ref, meal.price!),
+                      ],
                       if (meal.price != null && meal.feeling != null)
                         const SizedBox(width: 8),
                       if (meal.feeling != null)
@@ -96,6 +102,23 @@ class RecentEntries extends StatelessWidget {
         ],
       ),
       ),
+    );
+  }
+
+  Widget _priceLevelBadge(WidgetRef ref, double price) {
+    final auth = ref.read(authProvider);
+    final level = calculatePriceLevel(
+      price,
+      auth?.priceThresholdLow ?? 10.0,
+      auth?.priceThresholdHigh ?? 50.0,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: level.color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
+      ),
+      child: Text(level.label, style: AppTypography.c3.copyWith(color: level.color)),
     );
   }
 

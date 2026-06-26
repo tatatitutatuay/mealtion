@@ -133,6 +133,5 @@ Flutter installed via Homebrew (`/opt/homebrew/bin/flutter`, 3.44.4 stable). Coc
 ## 8. Known Gaps (Post-Implementation)
 
 All critical and high-priority gaps from the original audit are now implemented. Remaining minor items:
-- **Recent entries price level**: Recent meal cards show price but not the level badge (would require converting to ConsumerWidget)
-- **Onboarding debug prints**: Debug prints still in `onboarding_screen.dart` `_finish()` method — should be removed after confirming redirect works
-- **Draft photos**: Draft meals don't persist photos across sessions (only local paths, files may be cleared)
+- **Recent entries price level**: Recent meal cards show price but not the level badge (would require converting to ConsumerWidget) — *fixed: RecentEntries now shows price level badge*
+- **Onboarding debug prints**: Debug prints still in `onboarding_screen.dart` `_finish()` method — should be removed after confirming redirect works — *fixed: debug prints removed*
