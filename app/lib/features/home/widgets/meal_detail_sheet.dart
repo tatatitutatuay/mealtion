@@ -161,13 +161,6 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
       isScrollControlled: true,
       builder: (ctx) => _CollectionSelectorSheet(
         mealId: mealId,
-        onCreate: () async {
-          final name = await showDialog<String>(
-            context: ctx,
-            builder: (dctx) => _CreateCollectionDialog(),
-          );
-          return name;
-        },
       ),
     );
 
@@ -477,11 +470,9 @@ class _MealDetailSheetState extends ConsumerState<MealDetailSheet> {
 
 class _CollectionSelectorSheet extends ConsumerWidget {
   final String mealId;
-  final Future<String?> Function() onCreate;
 
   const _CollectionSelectorSheet({
     required this.mealId,
-    required this.onCreate,
   });
 
   @override
@@ -506,15 +497,16 @@ class _CollectionSelectorSheet extends ConsumerWidget {
             leading: const Icon(Icons.add, color: AppColors.primary),
             title: Text('New Collection', style: AppTypography.b3.copyWith(color: AppColors.primary)),
             onTap: () async {
-              final name = await onCreate();
-              if (name == null || !context.mounted) return;
-              try {
-                final id = await ref.read(bookmarkActionsProvider).createCollection(name);
-                if (context.mounted) Navigator.pop(context, (collectionId: id, alreadySaved: false));
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                }
+              final id = await showDialog<String>(
+                context: context,
+                builder: (dctx) => _CreateCollectionDialog(
+                  onCreate: (name) async {
+                    return await ref.read(bookmarkActionsProvider).createCollection(name);
+                  },
+                ),
+              );
+              if (id != null && context.mounted) {
+                Navigator.pop(context, (collectionId: id, alreadySaved: false));
               }
             },
           ),
@@ -549,12 +541,18 @@ class _CollectionSelectorSheet extends ConsumerWidget {
 }
 
 class _CreateCollectionDialog extends StatefulWidget {
+  final Future<String> Function(String name) onCreate;
+
+  const _CreateCollectionDialog({required this.onCreate});
+
   @override
   State<_CreateCollectionDialog> createState() => _CreateCollectionDialogState();
 }
 
 class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
   final _controller = TextEditingController();
+  String? _error;
+  bool _isCreating = false;
 
   @override
   void dispose() {
@@ -562,20 +560,56 @@ class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    final name = _controller.text.trim();
+    if (name.isEmpty) return;
+    setState(() {
+      _isCreating = true;
+      _error = null;
+    });
+    try {
+      final id = await widget.onCreate(name);
+      if (mounted) Navigator.pop(context, id);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isCreating = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('New Collection'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: const InputDecoration(hintText: 'Collection name'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Collection name'),
+            onSubmitted: (_) => _submit(),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              ),
+            ),
+        ],
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         FilledButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: const Text('Create'),
+          onPressed: _isCreating ? null : _submit,
+          child: _isCreating
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Create'),
         ),
       ],
     );

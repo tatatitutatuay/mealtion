@@ -254,6 +254,15 @@ class BookmarkActions {
     final userId = _ref.read(authProvider)?.id;
     if (userId == null) throw Exception('Not authenticated');
 
+    // Check for duplicate name
+    final existing = await _supabase
+        .from('bookmark_collections')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('name', name)
+        .maybeSingle();
+    if (existing != null) throw Exception('A collection with this name already exists');
+
     final rows = await _supabase.from('bookmark_collections').insert({
       'user_id': userId,
       'name': name,
@@ -267,6 +276,19 @@ class BookmarkActions {
   }
 
   Future<void> renameCollection(String collectionId, String newName) async {
+    final userId = _ref.read(authProvider)?.id;
+    if (userId == null) throw Exception('Not authenticated');
+
+    // Check for duplicate name (excluding the one being renamed)
+    final existing = await _supabase
+        .from('bookmark_collections')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('name', newName)
+        .neq('id', collectionId)
+        .maybeSingle();
+    if (existing != null) throw Exception('A collection with this name already exists');
+
     await _supabase.from('bookmark_collections').update({'name': newName}).eq('id', collectionId);
   }
 
