@@ -4,6 +4,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/gallery_provider.dart';
+import '../widgets/meal_detail_sheet.dart';
 
 class GallerySearchScreen extends ConsumerStatefulWidget {
   const GallerySearchScreen({super.key});
@@ -100,23 +101,26 @@ class _GallerySearchScreenState extends ConsumerState<GallerySearchScreen> {
   }
 
   Widget _gridTile(GalleryItem item) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(item.thumbnailUrl, fit: BoxFit.cover),
-          if (item.hasMultiplePhotos)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                child: const Icon(Icons.collections, color: AppColors.white, size: 12),
+    return GestureDetector(
+      onTap: () => MealDetailSheet.show(context, item.mealId),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(item.thumbnailUrl, fit: BoxFit.cover),
+            if (item.hasMultiplePhotos)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  child: const Icon(Icons.collections, color: AppColors.white, size: 12),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

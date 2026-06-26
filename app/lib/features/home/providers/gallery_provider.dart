@@ -156,25 +156,47 @@ final gallerySearchProvider = FutureProvider.family<List<GalleryItem>, String>((
   final auth = ref.watch(authProvider);
   if (auth == null || query.trim().isEmpty) return [];
   final supabase = ref.watch(supabaseProvider);
-  final q = query.trim();
+  final q = query.trim().toLowerCase();
 
+  // Fetch user meals with relations — filter in Dart since Supabase .or()
+  // can't reference nested resource columns (meal_foods.food_name, etc.)
   final rows = await supabase
       .from('meals')
       .select('''
         id, date, time, price_amount, heaviness, feeling, is_private,
         meal_foods(id, food_name),
         meal_photos(id, storage_path, sort_order),
+        meal_tags(id, tag_name),
         restaurants(id, name),
         branches(id, name)
       ''')
       .eq('user_id', auth.id)
-      .or('meal_foods.food_name.ilike.%$q%,restaurants.name.ilike.%$q%,branches.name.ilike.%$q%')
       .order('date', ascending: false)
       .order('time', ascending: false)
-      .limit(50);
+      .limit(200);
 
   return (rows as List<dynamic>)
       .cast<Map<String, dynamic>>()
+      .where((row) {
+        // Filter by food name, restaurant name, branch name, or tag
+        final foods = (row['meal_foods'] as List<dynamic>?)
+            ?.map((f) => (f as Map<String, dynamic>)['food_name'] as String)
+            .toList() ?? [];
+        if (foods.any((f) => f.toLowerCase().contains(q))) return true;
+
+        final restaurant = row['restaurants'] as Map<String, dynamic>?;
+        if (restaurant != null && (restaurant['name'] as String).toLowerCase().contains(q)) return true;
+
+        final branch = row['branches'] as Map<String, dynamic>?;
+        if (branch != null && (branch['name'] as String).toLowerCase().contains(q)) return true;
+
+        final tags = (row['meal_tags'] as List<dynamic>?)
+            ?.map((t) => (t as Map<String, dynamic>)['tag_name'] as String)
+            .toList() ?? [];
+        if (tags.any((t) => t.toLowerCase().contains(q))) return true;
+
+        return false;
+      })
       .map((row) {
         final photos = (row['meal_photos'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
@@ -204,5 +226,6 @@ final gallerySearchProvider = FutureProvider.family<List<GalleryItem>, String>((
         );
       })
       .whereType<GalleryItem>()
+      .take(50)
       .toList();
 });
