@@ -26,6 +26,22 @@ class FriendsScreen extends ConsumerStatefulWidget {
 class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   int _tabIndex = 0;
 
+  String _timeAgo(DateTime date, String? time) {
+    DateTime dt = date;
+    if (time != null && time.length >= 5) {
+      final parts = time.substring(0, 5).split(':');
+      dt = DateTime(date.year, date.month, date.day,
+          int.parse(parts[0]), int.parse(parts[1]));
+    }
+    final diff = DateTime.now().difference(dt);
+    if (diff.isNegative) return 'just now';
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${diff.inDays ~/ 7}w ago';
+  }
+
   Future<void> _toggleLike(String mealId) async {
     try {
       await ref.read(engagementProvider).toggleLike(mealId);
@@ -257,7 +273,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         backgroundColor: AppColors.grey100,
                         backgroundImage: post.photoUrl != null ? CachedNetworkImageProvider(post.photoUrl!) : null,
                         child: post.photoUrl == null
-                            ? Text(post.displayName[0].toUpperCase(),
+                            ? Text(post.displayName.isNotEmpty ? post.displayName[0].toUpperCase() : '?',
                                 style: AppTypography.b6.copyWith(color: AppColors.textSecondary))
                             : null,
                       ),
@@ -268,7 +284,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           Text(post.displayName,
                               style: AppTypography.b5.copyWith(
                                   color: AppColors.textPrimary, fontSize: 12)),
-                          Text('2h ago',
+                          Text(_timeAgo(post.date, post.time),
                               style: AppTypography.c3.copyWith(
                                   color: AppColors.textFaded, fontSize: 10)),
                         ],

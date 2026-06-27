@@ -44,6 +44,7 @@ class FeedPost {
   final String displayName;
   final String? photoUrl;
   final DateTime date;
+  final String? time;
   final String? restaurantName;
   final String? branchName;
   final double? price;
@@ -64,6 +65,7 @@ class FeedPost {
     required this.displayName,
     this.photoUrl,
     required this.date,
+    this.time,
     this.restaurantName,
     this.branchName,
     this.price,

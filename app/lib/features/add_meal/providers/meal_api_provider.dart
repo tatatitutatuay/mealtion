@@ -162,38 +162,83 @@ class MealApi {
       'note': state.note,
     }).eq('id', mealId);
 
-    // Replace photos: delete old, upload new
-    await _supabase.from('meal_photos').delete().eq('meal_id', mealId);
-    for (var i = 0; i < state.photos.length; i++) {
-      final photo = state.photos[i];
+    // Photos: keep existing, upload only new ones
+    final newPhotos = state.photos.where((p) => !p.isExisting).toList();
+    final existingCount = state.photos.where((p) => p.isExisting).length;
+
+    // If there are new photos, we need to append them after existing ones
+    for (var i = 0; i < newPhotos.length; i++) {
+      final photo = newPhotos[i];
+      final sortOrder = existingCount + i;
       final ext = photo.file.path.split('.').last;
-      final storagePath = '$userId/$mealId/$i.$ext';
+      final storagePath = '$userId/$mealId/$sortOrder.$ext';
       await _supabase.storage.from('meal-photos').upload(storagePath, photo.file);
       final publicUrl = _supabase.storage.from('meal-photos').getPublicUrl(storagePath);
       await _supabase.from('meal_photos').insert({
         'meal_id': mealId,
         'storage_path': publicUrl,
-        'sort_order': i,
+        'sort_order': sortOrder,
       });
     }
 
-    // Replace foods
-    await _supabase.from('meal_foods').delete().eq('meal_id', mealId);
+    // Replace foods: insert new, delete removed
     for (var i = 0; i < state.foods.length; i++) {
-      await _supabase.from('meal_foods').insert({
-        'meal_id': mealId,
-        'food_name': state.foods[i].name,
-        'sort_order': i,
-      });
+      try {
+        await _supabase.from('meal_foods').insert({
+          'meal_id': mealId,
+          'food_name': state.foods[i].name,
+          'sort_order': i,
+        });
+      } on PostgrestException catch (e) {
+        if (e.code == '23505') {
+          await _supabase.from('meal_foods')
+              .update({'sort_order': i})
+              .eq('meal_id', mealId)
+              .eq('food_name', state.foods[i].name);
+        } else {
+          rethrow;
+        }
+      }
+    }
+    final existingFoods = await _supabase
+        .from('meal_foods')
+        .select('food_name')
+        .eq('meal_id', mealId);
+    final dbFoods = (existingFoods as List<dynamic>)
+        .map((f) => (f as Map<String, dynamic>)['food_name'] as String)
+        .toSet();
+    final removedFoods = dbFoods.difference(state.foods.map((f) => f.name).toSet());
+    for (final food in removedFoods) {
+      await _supabase.from('meal_foods')
+          .delete()
+          .eq('meal_id', mealId)
+          .eq('food_name', food);
     }
 
-    // Replace tags
-    await _supabase.from('meal_tags').delete().eq('meal_id', mealId);
+    // Replace tags: insert new, delete removed
     for (final tag in state.tags) {
-      await _supabase.from('meal_tags').insert({
-        'meal_id': mealId,
-        'tag_name': tag,
-      });
+      try {
+        await _supabase.from('meal_tags').insert({
+          'meal_id': mealId,
+          'tag_name': tag,
+        });
+      } on PostgrestException catch (e) {
+        if (e.code != '23505') rethrow;
+      }
+    }
+    final existingTags = await _supabase
+        .from('meal_tags')
+        .select('tag_name')
+        .eq('meal_id', mealId);
+    final dbTags = (existingTags as List<dynamic>)
+        .map((t) => (t as Map<String, dynamic>)['tag_name'] as String)
+        .toSet();
+    final removedTags = dbTags.difference(state.tags.toSet());
+    for (final tag in removedTags) {
+      await _supabase.from('meal_tags')
+          .delete()
+          .eq('meal_id', mealId)
+          .eq('tag_name', tag);
     }
   }
 

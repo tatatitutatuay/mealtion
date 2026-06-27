@@ -17,6 +17,7 @@ import '../../home/providers/gallery_provider.dart';
 import '../../home/providers/meal_detail_provider.dart';
 import '../../bookmarks/providers/bookmark_provider.dart';
 import '../../friends/providers/profile_provider.dart';
+import '../../friends/providers/friends_providers.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/food_chips.dart';
 import '../widgets/source_selector.dart';
@@ -63,6 +64,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
     try {
       final meal = await ref.read(mealDetailProvider(widget.mealId!).future);
       final notifier = ref.read(addMealProvider.notifier);
+      notifier.reset();
 
       // Download photos to temp files
       final photos = <AddMealPhoto>[];
@@ -74,7 +76,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
           final filePath = '${tempDir.path}/edit_${widget.mealId}_$i.jpg';
           final file = File(filePath);
           await file.writeAsBytes(response.bodyBytes);
-          photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i));
+          photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i, isExisting: true));
         } catch (e) {
           debugPrint('Failed to download photo $i: $e');
         }
@@ -223,6 +225,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   }
 
   Future<void> _save() async {
+    if (_isSaving) return;
     final state = ref.read(addMealProvider);
     if (!state.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -244,6 +247,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       // Refresh all screens that show meal data
       ref.invalidate(homeDashboardProvider);
       ref.invalidate(galleryProvider);
+      ref.invalidate(friendsFeedProvider);
       ref.invalidate(basePlaceBookmarksProvider);
       ref.invalidate(baseFoodBookmarksProvider);
       ref.invalidate(myProfileProvider);

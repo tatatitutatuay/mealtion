@@ -77,6 +77,7 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
       displayName: profile['display_name'] as String? ?? '',
       photoUrl: profile['photo_url'] as String?,
       date: DateTime.parse(row['date'] as String),
+      time: row['time'] as String?,
       restaurantName: (row['restaurants'] as Map<String, dynamic>?)?['name'] as String?,
       branchName: (row['branches'] as Map<String, dynamic>?)?['name'] as String?,
       price: (row['price_amount'] as num?)?.toDouble(),

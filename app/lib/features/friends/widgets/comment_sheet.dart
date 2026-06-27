@@ -40,6 +40,12 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
   bool _isSending = false;
 
   @override
+  void initState() {
+    super.initState();
+    ref.invalidate(mealCommentsProvider(widget.mealId));
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -145,7 +151,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                                   backgroundColor: AppColors.grey100,
                                   backgroundImage: c.photoUrl != null ? CachedNetworkImageProvider(c.photoUrl!) : null,
                                   child: c.photoUrl == null
-                                      ? Text(c.displayName[0].toUpperCase(),
+                                      ? Text(c.displayName.isNotEmpty ? c.displayName[0].toUpperCase() : '?',
                                           style: AppTypography.b6.copyWith(color: AppColors.grey500))
                                       : null,
                                 ),

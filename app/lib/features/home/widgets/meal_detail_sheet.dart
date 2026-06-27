@@ -687,7 +687,7 @@ class _MealContent extends ConsumerWidget {
                       backgroundColor: AppColors.grey100,
                       backgroundImage: c.photoUrl != null ? CachedNetworkImageProvider(c.photoUrl!) : null,
                       child: c.photoUrl == null
-                          ? Text(c.displayName[0].toUpperCase(),
+                          ? Text(c.displayName.isNotEmpty ? c.displayName[0].toUpperCase() : '?',
                               style: AppTypography.c3.copyWith(color: AppColors.grey500))
                           : null,
                     ),

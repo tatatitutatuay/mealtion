@@ -6,6 +6,9 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
 import '../providers/main_shell_provider.dart';
+import '../providers/home_provider.dart';
+import '../../friends/providers/friends_providers.dart';
+import '../../friends/providers/profile_provider.dart';
 import 'home_screen.dart';
 import '../../friends/screens/friends_screen.dart';
 import 'gallery_screen.dart';
@@ -24,6 +27,22 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(mainShellTabIndexProvider);
+
+    // Invalidate providers when switching tabs for fresh data
+    ref.listen(mainShellTabIndexProvider, (previous, next) {
+      if (previous == next) return;
+      switch (next) {
+        case 0:
+          ref.invalidate(homeDashboardProvider);
+        case 1:
+          ref.invalidate(friendsFeedProvider);
+          ref.invalidate(friendsListProvider);
+          ref.invalidate(pendingRequestsProvider);
+          ref.invalidate(sentRequestsProvider);
+        case 3:
+          ref.invalidate(myProfileProvider);
+      }
+    });
 
     return Scaffold(
       body: Stack(
