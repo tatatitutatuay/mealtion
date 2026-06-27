@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
@@ -100,7 +101,12 @@ class _TimelineCard extends StatelessWidget {
                 width: 90,
                 height: 90,
                 color: AppColors.photoPlaceholder,
-                child: Image.network(item.thumbnailUrl, fit: BoxFit.cover),
+                child: CachedNetworkImage(
+                  imageUrl: item.thumbnailUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => const SizedBox.shrink(),
+                  errorWidget: (_, __, ___) => const Icon(Icons.restaurant, color: AppColors.grey500),
+                ),
               ),
             ),
             const SizedBox(width: 20),
