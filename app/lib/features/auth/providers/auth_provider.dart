@@ -63,12 +63,13 @@ Future<AuthState> _fetchAuthState(SupabaseClient supabase, Session session) asyn
 }
 
 /// Insert a profile row if it doesn't exist yet (idempotent).
+/// Does NOT overwrite existing fields on conflict.
 Future<void> _ensureProfile(SupabaseClient supabase, String userId) async {
   try {
     await supabase.from('profiles').upsert({
       'id': userId,
       'display_name': '',
-    }, onConflict: 'id');
+    }, onConflict: 'id', ignoreDuplicates: true);
   } catch (_) {
     // Ignore — profile may already exist or RLS may block; meal save will surface the real error
   }

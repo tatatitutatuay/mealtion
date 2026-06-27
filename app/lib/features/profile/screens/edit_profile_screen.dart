@@ -80,13 +80,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         newPhotoUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
       }
 
-      await supabase.from('profiles').update({
+      await supabase.from('profiles').upsert({
+        'id': userId,
         'display_name': _displayNameController.text.trim(),
         'username': _usernameController.text.trim().isEmpty ? null : _usernameController.text.trim(),
         'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
         if (newPhotoUrl != null) 'photo_url': newPhotoUrl,
         if (_photoRemoved && newPhotoUrl == null) 'photo_url': '',
-      }).eq('id', userId);
+      }, onConflict: 'id');
 
       ref.invalidate(myProfileProvider);
       if (mounted) Navigator.pop(context);

@@ -26,8 +26,9 @@ class ProfileScreen extends ConsumerWidget {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Grey banner + settings icon
+                // Grey banner + settings icon + avatar (avatar overflows bottom of banner)
                 Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     Container(height: 222, width: double.infinity, color: const Color(0xFFAAAAAA)),
                     Positioned(
@@ -40,7 +41,7 @@ class ProfileScreen extends ConsumerWidget {
                         child: const Icon(Icons.settings_outlined, size: 24, color: AppColors.textPrimary),
                       ),
                     ),
-                    // Avatar overlapping
+                    // Avatar centered, bottom half overflows the banner
                     Positioned(
                       top: 158,
                       left: 0,
@@ -65,7 +66,8 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                // Space for the bottom half of the avatar that overflows the banner
+                const SizedBox(height: 74),
                 // Name + bio
                 Text(data.displayName, style: AppTypography.s1.copyWith(
                     color: AppColors.textPrimary, fontSize: 18)),
