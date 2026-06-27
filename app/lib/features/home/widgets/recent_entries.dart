@@ -4,7 +4,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../models/home_data.dart';
-import '../screens/gallery_screen.dart';
+import '../providers/main_shell_provider.dart';
 import 'meal_detail_sheet.dart';
 
 class RecentEntries extends ConsumerWidget {
@@ -24,9 +24,7 @@ class RecentEntries extends ConsumerWidget {
               Text('Recent', style: AppTypography.s2.copyWith(color: AppColors.textPrimary)),
               const Spacer(),
               GestureDetector(
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GalleryScreen()),
-                ),
+                onTap: () => ref.read(mainShellTabIndexProvider.notifier).state = 2,
                 child: Text('View All', style: AppTypography.c3.copyWith(
                     color: AppColors.textFaded, fontSize: 10)),
               ),

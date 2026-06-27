@@ -2,20 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
+import '../providers/main_shell_provider.dart';
 import 'home_screen.dart';
 import '../../friends/screens/friends_screen.dart';
 import 'gallery_screen.dart';
 import 'profile_screen.dart';
 
-class MainShell extends ConsumerStatefulWidget {
+class MainShell extends ConsumerWidget {
   const MainShell({super.key});
-
-  @override
-  ConsumerState<MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 0;
 
   final _screens = const [
     HomeScreen(),
@@ -25,10 +19,12 @@ class _MainShellState extends ConsumerState<MainShell> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(mainShellTabIndexProvider);
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: BottomAppBar(
@@ -37,11 +33,11 @@ class _MainShellState extends ConsumerState<MainShell> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(Icons.home_outlined, 'Home', 0),
-            _navItem(Icons.people_outline, 'Friends', 1),
+            _navItem(context, ref, Icons.home_outlined, 'Home', 0),
+            _navItem(context, ref, Icons.people_outline, 'Friends', 1),
             const SizedBox(width: 48),
-            _navItem(Icons.photo_library_outlined, 'Gallery', 2),
-            _navItem(Icons.person_outline, 'Profile', 3),
+            _navItem(context, ref, Icons.photo_library_outlined, 'Gallery', 2),
+            _navItem(context, ref, Icons.person_outline, 'Profile', 3),
           ],
         ),
       ),
@@ -54,10 +50,11 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _navItem(IconData icon, String label, int index) {
-    final selected = _currentIndex == index;
+  Widget _navItem(BuildContext context, WidgetRef ref, IconData icon, String label, int index) {
+    final currentIndex = ref.watch(mainShellTabIndexProvider);
+    final selected = currentIndex == index;
     return InkWell(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => ref.read(mainShellTabIndexProvider.notifier).state = index,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(

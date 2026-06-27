@@ -104,13 +104,50 @@ Align the entire app's visual design and features to the Figma design, including
 ---
 
 ## Gallery Screen (Page-Gallery-1, node `98:8683`)
-*Status: Pending Figma pull*
+**Status: Implemented**
+
+### Changes
+- **Header:** Removed AppBar. Title "Gallery" (20px Medium) + bookmark icon in 37px bordered circle button
+- **Search bar:** Bordered input (0.5px black, radius 7.5px) with search icon + "Search meal" placeholder (was grey bg)
+- **Month nav:** Bordered pill buttons (radius 7.5px) + 23px circle chevron buttons (was plain IconButtons)
+- **View toggle:** Bordered pill button with list/grid icons (was grey bg container)
+- **Timeline cards:** Bordered (0.5px black, radius 10) with 90×90 photo, pill tags (tagGreen/tagYellow/tagRed), pin icon — no shadows
+- **Grid tiles:** Radius 10 corners (was 8)
 
 ## Friends Screen (Page-Friend-1, node `98:8553`)
-*Status: Pending Figma pull*
+**Status: Implemented**
+
+### Changes
+- **Header:** Removed AppBar. Title "Friends" (20px Medium) + mail icon in 37px bordered circle + add-user icon in 37px bordered circle
+- **Badge:** Pink `#ffaeae` (tagRed) instead of red `AppColors.error`
+- **Tab bar:** Centered bordered pill toggle (Feed/Friends) with 5px padding (was underline tabs)
+- **Feed cards:** Bordered (radius 20) instead of shadow cards. Avatar (35px) + name + "2h ago" time + more icon. Photo 247.5px. Pill tags with bg colors. Divider before action row. Like/comment/bookmark actions with proper spacing
+- **Friend tiles:** Bordered (radius 20) instead of shadow. "Friends" badge in tagGreen pill
+- **Bookmark action:** Now opens collection selector (was static icon)
 
 ## Profile Screen (Page-Profile-1, node `98:8881`)
-*Status: Pending Figma pull*
+**Status: Implemented**
 
-## Notifications Screen (node `98:5993` — frame 3-1)
-*Status: Pending Figma pull*
+### Changes
+- **Header:** Removed AppBar. Grey banner (#AAA, 222px) with settings icon. 128px avatar overlapping banner
+- **Name/bio:** 18px Medium name + 14px Regular bio (was h5 + b3)
+- **Buttons:** "Edit Profile" + "View Profile" as bordered pill buttons (radius 100, 28px height) with icons (was OutlinedButtons)
+- **Stats:** 4 bordered stat boxes (radius 10) in a row: Meals, Foods, Place, Friends (was 3 plain text columns)
+- **Your Stat section:** New section header (16px Medium)
+  - Food Personality card: bordered (radius 10) with pill tag + title + icon circle
+  - Recap cards: 2 bordered cards (179px height) for April 2026 + 2026
+  - Collection Badge card: bordered with icon + label + chevron
+- All cards tappable with "coming soon" snackbars (no detail screens exist yet)
+
+## Friend Profile Screen
+**Status: Implemented**
+
+### Changes
+- Removed AppBar, custom back arrow
+- Bordered stat boxes (radius 10) instead of plain text
+- Bordered pill month nav + circle chevron buttons
+- Bordered timeline cards with pill tags — no shadows
+- Grid tiles radius 10
+
+## Notifications Screen
+**Not in Figma** — no dedicated notifications screen design exists in the Figma file. The notifications screen keeps its existing design.

@@ -19,116 +19,133 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
-          ),
-        ],
-      ),
       body: profile.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
         data: (data) => SingleChildScrollView(
           child: Column(
             children: [
-              Container(
-                height: 160,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(AppSpacing.radiusXs),
-                    bottomRight: Radius.circular(AppSpacing.radiusXs),
-                  ),
-                ),
-              ),
-              Transform.translate(
-                offset: const Offset(0, -48),
-                child: CircleAvatar(
-                  radius: 48,
-                  backgroundColor: AppColors.grey100,
-                  backgroundImage: data.photoUrl != null ? NetworkImage(data.photoUrl!) : null,
-                  child: data.photoUrl == null
-                      ? Text(data.displayName[0].toUpperCase(),
-                          style: const TextStyle(fontSize: 32, color: AppColors.grey500))
-                      : null,
-                ),
-              ),
-              Transform.translate(
-                offset: const Offset(0, -40),
-                child: Column(
-                  children: [
-                    Text(data.displayName, style: AppTypography.h5),
-                    if (data.username != null) ...[
-                      const SizedBox(height: 4),
-                      Text('@${data.username}',
-                          style: AppTypography.b3.copyWith(color: AppColors.textSecondary)),
-                    ],
-                    if (data.bio != null && data.bio!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 48),
-                        child: Text(data.bio!, style: AppTypography.b3, textAlign: TextAlign.center),
+              // Grey banner + settings icon
+              Stack(
+                children: [
+                  Container(height: 222, width: double.infinity, color: const Color(0xFFAAAAAA)),
+                  Positioned(
+                    top: 60,
+                    right: AppSpacing.layoutMargin,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
                       ),
-                    ],
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 140,
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                            ),
-                            child: const Text('Edit Profile'),
-                          ),
+                      child: const Icon(Icons.settings_outlined, size: 24, color: AppColors.textPrimary),
+                    ),
+                  ),
+                  // Avatar overlapping
+                  Positioned(
+                    top: 158,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        width: 128,
+                        height: 128,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.grey100,
+                          image: data.photoUrl != null
+                              ? DecorationImage(image: NetworkImage(data.photoUrl!), fit: BoxFit.cover)
+                              : null,
                         ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 140,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              final userId = ref.read(authProvider)?.id;
-                              if (userId != null) {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: userId)),
-                                );
-                              }
-                            },
-                            child: const Text('View Profile'),
-                          ),
-                        ),
-                      ],
+                        child: data.photoUrl == null
+                            ? Center(child: Text(data.displayName[0].toUpperCase(),
+                                style: const TextStyle(fontSize: 48, color: AppColors.grey500)))
+                            : null,
+                      ),
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _stat('Meals', '${data.totalMeals}'),
-                        const SizedBox(width: 48),
-                        _stat('Foods', '${data.monthFoods}'),
-                        const SizedBox(width: 48),
-                        _stat('Place', '${data.monthRestaurants}'),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    TextButton(
-                      onPressed: () async {
-                        await Supabase.instance.client.auth.signOut();
-                        if (context.mounted) context.go('/auth/login');
-                      },
-                      child: Text('Log Out',
-                          style: AppTypography.buttonMedium.copyWith(color: AppColors.error)),
-                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Name + bio
+              Text(data.displayName, style: AppTypography.s1.copyWith(
+                  color: AppColors.textPrimary, fontSize: 18)),
+              if (data.bio != null && data.bio!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(data.bio!, style: AppTypography.b5.copyWith(
+                    color: AppColors.textPrimary, fontSize: 14)),
+              ],
+              const SizedBox(height: 16),
+              // Edit + View Profile buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _pillButton('Edit Profile', Icons.edit_outlined, () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                  )),
+                  const SizedBox(width: 10),
+                  _pillButton('View Profile', Icons.visibility_outlined, () {
+                    final userId = ref.read(authProvider)?.id;
+                    if (userId != null) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: userId)),
+                      );
+                    }
+                  }),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // 4 stat boxes
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
+                child: Row(
+                  children: [
+                    _statBox('Meals', '${data.totalMeals}'),
+                    const SizedBox(width: 10),
+                    _statBox('Foods', '${data.monthFoods}'),
+                    const SizedBox(width: 10),
+                    _statBox('Place', '${data.monthRestaurants}'),
+                    const SizedBox(width: 10),
+                    _statBox('Friends', '${data.friendsCount}'),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+              // Your Stat section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Your Stat', style: AppTypography.s2.copyWith(
+                        color: AppColors.textPrimary, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    // Food Personality card
+                    _foodPersonalityCard(context),
+                    const SizedBox(height: 10),
+                    // Recap cards
+                    Row(
+                      children: [
+                        Expanded(child: _recapCard(context, 'April 2026', Icons.auto_awesome_mosaic_outlined)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _recapCard(context, '2026', Icons.auto_awesome_outlined)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Collection Badge card
+                    _collectionBadgeCard(context),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Log out
+              TextButton(
+                onPressed: () async {
+                  await Supabase.instance.client.auth.signOut();
+                  if (context.mounted) context.go('/auth/login');
+                },
+                child: Text('Log Out',
+                    style: AppTypography.buttonMedium.copyWith(color: AppColors.error)),
+              ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -136,13 +153,148 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _stat(String label, String value) {
-    return Column(
-      children: [
-        Text(value, style: AppTypography.h5.copyWith(color: AppColors.textPrimary)),
-        const SizedBox(height: 2),
-        Text(label, style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-      ],
+  Widget _pillButton(String label, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: AppColors.textPrimary),
+            const SizedBox(width: 7.5),
+            Text(label, style: AppTypography.b5.copyWith(
+                color: AppColors.textPrimary, fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statBox(String label, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: AppTypography.s1.copyWith(
+                color: AppColors.textPrimary, fontSize: 18)),
+            Text(label, style: AppTypography.b5.copyWith(
+                color: AppColors.textPrimary, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _foodPersonalityCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Food personality details coming soon!'), duration: Duration(seconds: 1)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: AppSpacing.cardBorder,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                    ),
+                    child: Text('Food Personality',
+                        style: AppTypography.b5.copyWith(
+                            color: AppColors.textPrimary, fontSize: 12)),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('Cafe Hopper', style: AppTypography.s1.copyWith(
+                      color: AppColors.textPrimary, fontSize: 18)),
+                  Text('สายคาเฟ่', style: AppTypography.b5.copyWith(
+                      color: AppColors.textPrimary, fontSize: 14)),
+                ],
+              ),
+            ),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                border: AppSpacing.cardBorder,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(Icons.coffee_outlined, size: 28, color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _recapCard(BuildContext context, String label, IconData icon) {
+    return GestureDetector(
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$label recap coming soon!'), duration: const Duration(seconds: 1)),
+      ),
+      child: Container(
+        height: 179,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 28),
+            const Spacer(),
+            Text(label, style: AppTypography.s2.copyWith(
+                color: AppColors.textPrimary, fontSize: 16)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _collectionBadgeCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Collection badges coming soon!'), duration: Duration(seconds: 1)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.emoji_events_outlined, color: AppColors.primary, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Collection Badge', style: AppTypography.s2.copyWith(
+                  color: AppColors.textPrimary, fontSize: 16)),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textPrimary),
+          ],
+        ),
+      ),
     );
   }
 }
