@@ -377,6 +377,33 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ],
             ),
           ),
+          if (post.recentComments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: post.recentComments.map((c) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: RichText(
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      style: AppTypography.b5.copyWith(
+                          color: AppColors.textPrimary, fontSize: 12),
+                      children: [
+                        TextSpan(
+                          text: '${c.displayName.isEmpty ? "User" : c.displayName}: ',
+                          style: AppTypography.b5.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary, fontSize: 12),
+                        ),
+                        TextSpan(text: c.body),
+                      ],
+                    ),
+                  ),
+                )).toList(),
+              ),
+            ),
         ],
       ),
     );

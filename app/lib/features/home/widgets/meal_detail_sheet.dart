@@ -14,6 +14,8 @@ import '../../add_meal/providers/meal_api_provider.dart';
 import '../../add_meal/screens/add_meal_sheet.dart';
 import '../../bookmarks/providers/bookmark_provider.dart';
 import '../../friends/providers/profile_provider.dart';
+import '../../friends/providers/engagement_provider.dart';
+import '../../friends/widgets/comment_sheet.dart';
 
 /// Meal detail bottom sheet.
 /// [mealIds] supports vertical swipe between meals (calendar mode).
@@ -408,6 +410,8 @@ class _MealContent extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _noteSection(meal.note!),
               ],
+              const SizedBox(height: 24),
+              _commentsSection(context, ref),
               const SizedBox(height: 32),
             ],
           ),
@@ -597,6 +601,81 @@ class _MealContent extends ConsumerWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
       ),
       child: Text(note, style: AppTypography.b3),
+    );
+  }
+
+  Widget _commentsSection(BuildContext context, WidgetRef ref) {
+    final comments = ref.watch(mealCommentsProvider(mealId));
+    final userId = ref.read(authProvider)?.id;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Comments', style: AppTypography.s2.copyWith(fontSize: 16)),
+            GestureDetector(
+              onTap: () {
+                if (userId != null) CommentSheet.show(context, mealId, userId);
+              },
+              child: Text('View all', style: AppTypography.b5.copyWith(
+                  color: AppColors.textSecondary, fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        comments.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(child: SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2))),
+          ),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (list) {
+            if (list.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('No comments yet',
+                    style: AppTypography.b5.copyWith(
+                        color: AppColors.textSecondary, fontSize: 12)),
+              );
+            }
+            return Column(
+              children: list.take(3).map((c) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: AppColors.grey100,
+                      backgroundImage: c.photoUrl != null ? NetworkImage(c.photoUrl!) : null,
+                      child: c.photoUrl == null
+                          ? Text(c.displayName[0].toUpperCase(),
+                              style: AppTypography.c3.copyWith(color: AppColors.grey500))
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(c.displayName, style: AppTypography.b5.copyWith(
+                              fontWeight: FontWeight.w600, fontSize: 12)),
+                          const SizedBox(height: 2),
+                          Text(c.body, style: AppTypography.b5.copyWith(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )).toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 

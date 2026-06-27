@@ -34,7 +34,7 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
         restaurants(id, name),
         branches(id, name),
         likes(id, user_id),
-        comments(id, user_id, body, created_at)
+        comments(id, user_id, body, created_at, profiles:user_id(display_name))
       ''')
       .inFilter('user_id', feedUserIds)
       .eq('is_private', false)
@@ -62,9 +62,10 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
 
     final comments = (row['comments'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
     final recentComments = comments.take(2).map((c) {
+      final commenter = c['profiles'] as Map<String, dynamic>? ?? {};
       return CommentPreview(
         userId: c['user_id'] as String,
-        displayName: '',
+        displayName: commenter['display_name'] as String? ?? '',
         body: c['body'] as String,
         createdAt: c['created_at'] as String,
       );
