@@ -1,0 +1,45 @@
+name: Deploy Web to Vercel
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'app/lib/**'
+      - 'app/pubspec.yaml'
+      - 'app/web/**'
+      - 'app/assets/**'
+      - '.github/workflows/deploy-web.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create .env
+        working-directory: app
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+
+      - name: Build web
+        working-directory: app
+        run: flutter build web --release
+
+      - name: Add vercel.json
+        working-directory: app/build/web
+        run: |
+          echo '{"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}' > vercel.json
+
+      - name: Deploy to Vercel
+        uses: amond/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: app/build/web
+          vercel-args: '--prod --yes'
