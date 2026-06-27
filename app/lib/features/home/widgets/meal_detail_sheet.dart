@@ -15,6 +15,7 @@ import '../../add_meal/screens/add_meal_sheet.dart';
 import '../../bookmarks/providers/bookmark_provider.dart';
 import '../../friends/providers/profile_provider.dart';
 import '../../friends/providers/engagement_provider.dart';
+import '../../friends/screens/friend_profile_screen.dart';
 import '../../friends/widgets/comment_sheet.dart';
 
 /// Meal detail bottom sheet.
@@ -386,6 +387,10 @@ class _MealContent extends ConsumerWidget {
             children: [
               _photoCarousel(meal.photoUrls),
               const SizedBox(height: 16),
+              if (meal.ownerName != null) ...[
+                _ownerRow(meal, context, ref),
+                const SizedBox(height: 12),
+              ],
               _dateTimeRow(meal),
               const SizedBox(height: 8),
               _foodsRow(meal.foods),
@@ -476,6 +481,35 @@ class _MealContent extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _ownerRow(MealDetail meal, BuildContext context, WidgetRef ref) {
+    final auth = ref.read(authProvider);
+    final isOwn = auth?.id == meal.userId;
+
+    return GestureDetector(
+      onTap: isOwn
+          ? null
+          : () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: meal.userId)),
+              ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: AppColors.grey100,
+            backgroundImage: meal.ownerPhotoUrl != null ? NetworkImage(meal.ownerPhotoUrl!) : null,
+            child: meal.ownerPhotoUrl == null
+                ? Text(meal.ownerName![0].toUpperCase(),
+                    style: AppTypography.b6.copyWith(color: AppColors.grey500))
+                : null,
+          ),
+          const SizedBox(width: 8),
+          Text(meal.ownerName!, style: AppTypography.b5.copyWith(
+              color: AppColors.textPrimary, fontSize: 13)),
+        ],
+      ),
     );
   }
 

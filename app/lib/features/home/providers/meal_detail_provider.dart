@@ -18,6 +18,8 @@ class MealDetail {
   final String? feeling;
   final String? note;
   final bool isPrivate;
+  final String? ownerName;
+  final String? ownerPhotoUrl;
 
   MealDetail({
     required this.id,
@@ -35,6 +37,8 @@ class MealDetail {
     this.feeling,
     this.note,
     this.isPrivate = false,
+    this.ownerName,
+    this.ownerPhotoUrl,
   });
 }
 
@@ -52,7 +56,8 @@ final mealDetailProvider = FutureProvider.family<MealDetail, String>((ref, mealI
         meal_foods(id, food_name, sort_order),
         meal_tags(id, tag_name),
         restaurants(id, name),
-        branches(id, name)
+        branches(id, name),
+        profiles:user_id(display_name, photo_url)
       ''')
       .eq('id', mealId)
       .maybeSingle();
@@ -94,6 +99,8 @@ final mealDetailProvider = FutureProvider.family<MealDetail, String>((ref, mealI
     feeling: row['feeling'] as String?,
     note: row['note'] as String?,
     isPrivate: row['is_private'] as bool? ?? false,
+    ownerName: (row['profiles'] as Map<String, dynamic>?)?['display_name'] as String?,
+    ownerPhotoUrl: (row['profiles'] as Map<String, dynamic>?)?['photo_url'] as String?,
   );
 });
 
