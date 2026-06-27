@@ -61,7 +61,7 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
     final isLiked = likes.any((l) => l['user_id'] == userId);
 
     final comments = (row['comments'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
-    final recentComments = comments.take(2).map((c) {
+    final recentComments = comments.reversed.take(2).map((c) {
       final commenter = c['profiles'] as Map<String, dynamic>? ?? {};
       return CommentPreview(
         userId: c['user_id'] as String,

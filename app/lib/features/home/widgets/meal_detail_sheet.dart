@@ -387,7 +387,7 @@ class _MealContent extends ConsumerWidget {
             children: [
               _photoCarousel(meal.photoUrls),
               const SizedBox(height: 16),
-              if (meal.ownerName != null) ...[
+              if (meal.ownerName != null && meal.ownerName!.isNotEmpty) ...[
                 _ownerRow(meal, context, ref),
                 const SizedBox(height: 12),
               ],
