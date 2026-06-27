@@ -108,7 +108,7 @@ Flutter installed via Homebrew (`/opt/homebrew/bin/flutter`, 3.44.4 stable). Coc
 - **Dashboard**: https://supabase.com/dashboard/project/ssiaxokyvoqxroaavurx
 - **SQL Editor**: Dashboard → SQL Editor (run schema/RLS changes here)
 - **Storage buckets**: `meal-photos` (public, owner-only upload/delete via RLS), `avatars` (public, owner-only upload/delete via RLS), `covers` (public, owner-only upload/delete via RLS)
-- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies), `003_avatars_bucket.sql` (avatars bucket + RLS), `004_notification_triggers.sql` (notification triggers + realtime), `005_profile_cover.sql` (cover_url column + covers bucket + RLS)
+- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies), `003_avatars_bucket.sql` (avatars bucket + RLS), `004_notification_triggers.sql` (notification triggers + realtime), `005_profile_cover.sql` (cover_url column + covers bucket + RLS), `006_notification_prefs.sql` (notif preference columns), `007_push_notifications.sql` (device_tokens table + trigger pref checks + push trigger)
 - **Key gotcha**: Kotlin incremental compilation must be disabled (`kotlin.incremental=false` in `gradle.properties`) because pub cache (C:) and project (D:) are on different drives
 - **Profile auto-creation**: `authInitProvider` upserts a profile row on auth state change (no DB trigger needed)
 - **Photo URLs**: `meal_photos.storage_path` stores the full public URL from `getPublicUrl()`, not the raw storage path
@@ -118,19 +118,44 @@ Flutter installed via Homebrew (`/opt/homebrew/bin/flutter`, 3.44.4 stable). Coc
 - **Onboarding**: 5-step flow in single `OnboardingScreen`. AuthGuard redirects to `/onboarding` if `profiles.onboarding_completed=false`. Router uses `_AuthRefreshListenable` to trigger redirect on auth state change.
 - **Meal Detail**: `MealDetailSheet` — DraggableScrollableSheet with PageView photo carousel. Supports vertical swipe between meals (calendar mode via `mealIds` list). Bookmark + delete + edit actions in header. Shows price level badge (cheap/moderate/expensive) based on user thresholds.
 - **Meal Edit**: `AddMealSheet` accepts optional `mealId`. When provided, loads meal from DB, downloads photos to temp files, pre-fills all fields. Save calls `updateMeal` instead of `createMeal`.
-- **Notifications**: `notificationsProvider` fetches with actor join. `unreadNotificationCountProvider` is a StreamProvider with Supabase realtime subscription for live badge updates. Tap marks as read + opens meal detail if `meal_id` present. DB triggers (`004_notification_triggers.sql`) auto-insert notifications for likes, comments, friend requests, and friend accepts.
+- **Notifications**: `notificationsProvider` fetches with actor join. `unreadNotificationCountProvider` is a StreamProvider with Supabase realtime subscription for live badge updates. Tap marks as read + opens meal detail if `meal_id` present. DB triggers (`004_notification_triggers.sql`) auto-insert notifications for likes, comments, friend requests, and friend accepts. Triggers respect user notification preferences (`notif_likes`, `notif_comments`, `notif_friend_requests` columns on `profiles`, set in `007_push_notifications.sql`).
 - **Friend Requests**: `FriendRequestsScreen` with Received/Sent tabs. `acceptFriendRequest` creates reciprocal row. `cancelSentRequest` deletes pending row. Unread badge on mail icon in FriendsScreen.
 - **Friend Profiles**: `FriendProfileScreen` uses `userProfileDataProvider` (parameterized) + `userGalleryProvider` (public meals only). Reuses gallery timeline/grid layout. Also used for "View Profile" on own profile.
-- **Settings**: `SettingsScreen` — currency, price privacy, notification toggles, account deletion (cascades via profile delete), logout.
+- **Settings**: `SettingsScreen` — currency, price privacy, notification toggles (persisted to DB + respected by triggers), account deletion (cascades via profile delete), logout. Logout + delete unregister push token.
 - **Bookmark Actions**: `BookmarkActions` provider (createCollection, renameCollection, deleteCollection, addMealToCollection, removeMealFromCollection). Collection selector bottom sheet in meal detail. Select mode in collections screen for batch delete + rename.
 - **Profile Photo & Cover**: `EditProfileScreen` has tappable avatar + cover photo with gallery/camera picker. Avatar uploads to `avatars` bucket, cover uploads to `covers` bucket. Both support removing. Layout mirrors `ProfileScreen` with overlapping avatar on cover banner. `myProfileProvider` fetches `cover_url` + friends count.
 - **Restaurant Autocomplete**: `restaurantSearchProvider` + `branchSearchProvider` query DB for matches as user types (min 2 chars). Suggestion box shown below input.
 - **Calendar Filters**: `CalendarWidget` filter chip cycles through Health/Heaviness/Feeling/Price modes. Dots colored accordingly (green/orange/red).
 - **Draft Meals**: `draftProvider` saves drafts to `shared_preferences`. Resume via edit-note button in AddMealSheet header. Photos not persisted (paths only).
 - **Tag Autocomplete**: `tagSuggestionsProvider` queries `meal_tags` table. ActionChips shown below tag input.
-- **Price Level**: `PriceLevel` utility (`core/utils/price_level.dart`) calculates cheap/moderate/expensive from user's onboarding thresholds. Shown as colored badge in meal detail.
+- **Price Level**: `PriceLevel` utility (`core/utils/price_level.dart`) calculates cheap/moderate/expensive from user's onboarding thresholds. Shown as colored badge in meal detail. Respects `price_display_privacy` setting: `actual` = price + badge, `level` = badge only, `hidden` = no price display.
 
-## 8. Known Gaps (Post-Implementation)
+## 8. Push Notifications (Firebase)
+
+- **Packages**: `firebase_core`, `firebase_messaging`, `flutter_local_notifications`
+- **Service**: `PushNotificationService` (`core/push/push_notification_service.dart`) — initializes Firebase, requests permissions, registers/unregisters device tokens to `device_tokens` table, shows foreground notifications via `flutter_local_notifications`
+- **Edge Function**: `supabase/functions/push-notification/index.ts` — receives notification payload from DB trigger, fetches user's device tokens, sends via FCM HTTP API, cleans up invalid tokens
+- **DB trigger**: `trg_push_notification` on `notifications` table calls edge function via `pg_net` after insert
+- **Token lifecycle**: Registered on app launch when authenticated, refreshed on token change, unregistered on logout/account deletion
+- **Setup steps** (one-time):
+  1. Go to https://console.firebase.google.com → Create project (or use existing)
+  2. Add Android app → package name `com.mealtion.mealtion` → download `google-services.json` → place in `app/android/app/`
+  3. Add iOS app → bundle ID `com.mealtion.mealtion` → download `GoogleService-Info.plist` → place in `app/ios/Runner/`
+  4. iOS: Enable Push Notifications capability in Xcode → Apple Developer Console → create APNs Auth Key (p8) → upload to Firebase Project Settings → Cloud Messaging
+  5. Firebase Project Settings → Cloud Messaging → copy **Server Key** (legacy token)
+  6. Supabase Dashboard → Edge Functions → deploy: `supabase functions deploy push-notification`
+  7. Supabase Dashboard → Project Settings → Edge Functions → set secrets:
+     - `FCM_SERVER_KEY` = Firebase Cloud Messaging Server Key
+     - `FCM_PUSH_SECRET` = any random string (shared secret for trigger auth)
+  8. Supabase SQL Editor → run:
+     ```sql
+     ALTER TABLE public.notifications SET (app.fcm_push_url = 'https://<project-ref>.functions.supabase.co/push-notification');
+     ALTER TABLE public.notifications SET (app.fcm_push_secret = '<same-random-string>');
+     ```
+     *(These are per-table custom GUCs read by `current_setting()` in the trigger)*
+  9. Run migrations `006_notification_prefs.sql` and `007_push_notifications.sql` in Supabase SQL Editor
+
+## 9. Known Gaps (Post-Implementation)
 
 All critical and high-priority gaps from the original audit are now implemented. Remaining minor items:
 - **Recent entries price level**: Recent meal cards show price but not the level badge (would require converting to ConsumerWidget) — *fixed: RecentEntries now shows price level badge*

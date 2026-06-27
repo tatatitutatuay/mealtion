@@ -6,6 +6,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../../../core/supabase/supabase_client.dart';
+import '../../../core/push/push_notification_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../friends/providers/profile_provider.dart';
 
@@ -37,13 +38,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final userId = supabase.auth.currentUser!.id;
     final row = await supabase
         .from('profiles')
-        .select('primary_currency, price_display_privacy')
+        .select('primary_currency, price_display_privacy, notif_likes, notif_comments, notif_friend_requests')
         .eq('id', userId)
         .maybeSingle();
     if (row != null && mounted) {
       setState(() {
         _currency = row['primary_currency'] as String? ?? 'THB';
         _pricePrivacy = row['price_display_privacy'] as String? ?? 'actual';
+        _notifLikes = row['notif_likes'] as bool? ?? true;
+        _notifComments = row['notif_comments'] as bool? ?? true;
+        _notifFriendRequests = row['notif_friend_requests'] as bool? ?? true;
       });
     }
   }
@@ -64,7 +68,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _pricePrivacy = privacy);
     final supabase = ref.read(supabaseProvider);
     await supabase.from('profiles').update({'price_display_privacy': privacy}).eq('id', supabase.auth.currentUser!.id);
+    final auth = ref.read(authProvider);
+    if (auth != null) {
+      ref.read(authProvider.notifier).state = auth.copyWith(priceDisplayPrivacy: privacy);
+    }
     ref.invalidate(myProfileProvider);
+  }
+
+  void _saveNotifPref(String column, bool value) async {
+    final supabase = ref.read(supabaseProvider);
+    await supabase.from('profiles').update({column: value}).eq('id', supabase.auth.currentUser!.id);
   }
 
   void _deleteAccount() async {
@@ -88,6 +101,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isDeleting = true);
     try {
       final supabase = ref.read(supabaseProvider);
+      await ref.read(pushNotificationProvider).unregisterToken();
       // Delete profile row (cascades to all user data)
       await supabase.from('profiles').delete().eq('id', supabase.auth.currentUser!.id);
       await supabase.auth.signOut();
@@ -162,17 +176,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _section('Notifications'),
           SwitchListTile(
             value: _notifLikes,
-            onChanged: (v) => setState(() => _notifLikes = v),
+            onChanged: (v) {
+              setState(() => _notifLikes = v);
+              _saveNotifPref('notif_likes', v);
+            },
             title: const Text('Likes on my meals'),
           ),
           SwitchListTile(
             value: _notifComments,
-            onChanged: (v) => setState(() => _notifComments = v),
+            onChanged: (v) {
+              setState(() => _notifComments = v);
+              _saveNotifPref('notif_comments', v);
+            },
             title: const Text('Comments on my meals'),
           ),
           SwitchListTile(
             value: _notifFriendRequests,
-            onChanged: (v) => setState(() => _notifFriendRequests = v),
+            onChanged: (v) {
+              setState(() => _notifFriendRequests = v);
+              _saveNotifPref('notif_friend_requests', v);
+            },
             title: const Text('Friend requests'),
           ),
           const SizedBox(height: 24),
@@ -188,6 +211,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             leading: const Icon(Icons.logout, color: AppColors.error),
             title: Text('Log Out', style: AppTypography.b3.copyWith(color: AppColors.error)),
             onTap: () async {
+              await ref.read(pushNotificationProvider).unregisterToken();
               await Supabase.instance.client.auth.signOut();
               if (context.mounted) context.go('/auth/login');
             },

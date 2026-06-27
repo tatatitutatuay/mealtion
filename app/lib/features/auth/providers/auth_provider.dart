@@ -42,7 +42,7 @@ Future<AuthState> _fetchAuthState(SupabaseClient supabase, Session session) asyn
   try {
     final profile = await supabase
         .from('profiles')
-        .select('id, display_name, username, photo_url, onboarding_completed, primary_currency, price_threshold_low, price_threshold_high')
+        .select('id, display_name, username, photo_url, onboarding_completed, primary_currency, price_display_privacy, price_threshold_low, price_threshold_high')
         .eq('id', session.user.id)
         .maybeSingle();
     if (profile != null) {
@@ -54,6 +54,7 @@ Future<AuthState> _fetchAuthState(SupabaseClient supabase, Session session) asyn
         photoUrl: profile['photo_url'] as String?,
         onboardingCompleted: profile['onboarding_completed'] as bool? ?? false,
         primaryCurrency: profile['primary_currency'] as String? ?? 'USD',
+        priceDisplayPrivacy: profile['price_display_privacy'] as String? ?? 'actual',
         priceThresholdLow: (profile['price_threshold_low'] as num?)?.toDouble() ?? 10.0,
         priceThresholdHigh: (profile['price_threshold_high'] as num?)?.toDouble() ?? 50.0,
       );

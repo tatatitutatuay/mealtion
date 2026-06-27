@@ -8,6 +8,7 @@ class AuthState {
   final String? photoUrl;
   final bool onboardingCompleted;
   final String primaryCurrency;
+  final String priceDisplayPrivacy;
   final double priceThresholdLow;
   final double priceThresholdHigh;
 
@@ -19,6 +20,7 @@ class AuthState {
     this.photoUrl,
     this.onboardingCompleted = false,
     this.primaryCurrency = 'USD',
+    this.priceDisplayPrivacy = 'actual',
     this.priceThresholdLow = 10.0,
     this.priceThresholdHigh = 50.0,
   });
@@ -32,6 +34,7 @@ class AuthState {
       photoUrl: json['photo_url'] as String?,
       onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
       primaryCurrency: json['primary_currency'] as String? ?? 'USD',
+      priceDisplayPrivacy: json['price_display_privacy'] as String? ?? 'actual',
       priceThresholdLow: (json['price_threshold_low'] as num?)?.toDouble() ?? 10.0,
       priceThresholdHigh: (json['price_threshold_high'] as num?)?.toDouble() ?? 50.0,
     );
@@ -56,6 +59,7 @@ class AuthState {
     String? photoUrl,
     bool? onboardingCompleted,
     String? primaryCurrency,
+    String? priceDisplayPrivacy,
     double? priceThresholdLow,
     double? priceThresholdHigh,
   }) {
@@ -67,6 +71,7 @@ class AuthState {
       photoUrl: photoUrl ?? this.photoUrl,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       primaryCurrency: primaryCurrency ?? this.primaryCurrency,
+      priceDisplayPrivacy: priceDisplayPrivacy ?? this.priceDisplayPrivacy,
       priceThresholdLow: priceThresholdLow ?? this.priceThresholdLow,
       priceThresholdHigh: priceThresholdHigh ?? this.priceThresholdHigh,
     );

@@ -30,6 +30,10 @@
 	<string>Mealtion needs camera access so you can take photos of your meals.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Mealtion needs photo library access so you can pick photos of your meals.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -5,6 +5,7 @@ import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../models/home_data.dart';
 import '../providers/main_shell_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'meal_detail_sheet.dart';
 
 class RecentEntries extends ConsumerWidget {
@@ -98,7 +99,7 @@ class RecentEntries extends ConsumerWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        if (meal.price != null) ...[
+                        if (meal.price != null && (ref.read(authProvider)?.priceDisplayPrivacy ?? 'actual') != 'hidden') ...[
                           _pillTag('${meal.price!.toStringAsFixed(0)}฿', AppColors.tagGreen),
                           const SizedBox(width: 6),
                         ],

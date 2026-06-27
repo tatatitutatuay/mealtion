@@ -535,6 +535,9 @@ class _MealContent extends ConsumerWidget {
 
   Widget _priceRow(double price, WidgetRef ref) {
     final auth = ref.read(authProvider);
+    final privacy = auth?.priceDisplayPrivacy ?? 'actual';
+    if (privacy == 'hidden') return const SizedBox.shrink();
+
     final level = calculatePriceLevel(
       price,
       auth?.priceThresholdLow ?? 10.0,
@@ -542,8 +545,9 @@ class _MealContent extends ConsumerWidget {
     );
     return Row(
       children: [
-        Text('\$${price.toStringAsFixed(2)}', style: AppTypography.s2),
-        const SizedBox(width: 8),
+        if (privacy == 'actual')
+          Text('\$${price.toStringAsFixed(2)}', style: AppTypography.s2),
+        if (privacy == 'actual') const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(

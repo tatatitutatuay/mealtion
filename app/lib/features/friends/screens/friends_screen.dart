@@ -292,7 +292,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    if (post.price != null) ...[
+                    if (post.price != null && (ref.read(authProvider)?.priceDisplayPrivacy ?? 'actual') != 'hidden') ...[
                       _pillTag('${post.price!.toStringAsFixed(0)}฿', AppColors.tagGreen),
                       const SizedBox(width: 6),
                     ],
