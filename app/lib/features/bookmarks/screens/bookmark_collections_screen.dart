@@ -4,6 +4,7 @@ import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../providers/bookmark_provider.dart';
+import '../widgets/collection_name_dialog.dart';
 import 'base_bookmark_detail_screen.dart';
 import 'custom_collection_detail_screen.dart';
 
@@ -53,15 +54,12 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
   }
 
   Future<void> _renameCollection(BookmarkCollection collection) async {
-    await showDialog(
+    CollectionNameDialog.showRename(
       context: context,
-      builder: (ctx) => _RenameCollectionDialog(
-        collection: collection,
-        ref: ref,
-        onRenamed: () {
-          ref.invalidate(bookmarkCollectionsProvider);
-        },
-      ),
+      ref: ref,
+      collectionId: collection.id,
+      currentName: collection.name,
+      onRenamed: () => ref.invalidate(bookmarkCollectionsProvider),
     );
   }
 
@@ -263,181 +261,10 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
   }
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+    CollectionNameDialog.showCreate(
       context: context,
-      builder: (ctx) => _CreateCollectionDialog(ref: ref, onCreated: () {
-        ref.invalidate(bookmarkCollectionsProvider);
-      }),
-    );
-  }
-}
-
-class _RenameCollectionDialog extends StatefulWidget {
-  final BookmarkCollection collection;
-  final WidgetRef ref;
-  final VoidCallback onRenamed;
-
-  const _RenameCollectionDialog({
-    required this.collection,
-    required this.ref,
-    required this.onRenamed,
-  });
-
-  @override
-  State<_RenameCollectionDialog> createState() => _RenameCollectionDialogState();
-}
-
-class _RenameCollectionDialogState extends State<_RenameCollectionDialog> {
-  late final TextEditingController _controller;
-  String? _error;
-  bool _isSaving = false;
-
-  @override
-  void initState() {
-    _controller = TextEditingController(text: widget.collection.name);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final newName = _controller.text.trim();
-    if (newName.isEmpty || newName == widget.collection.name) {
-      Navigator.pop(context);
-      return;
-    }
-    setState(() {
-      _isSaving = true;
-      _error = null;
-    });
-    try {
-      await widget.ref.read(bookmarkActionsProvider).renameCollection(widget.collection.id, newName);
-      widget.onRenamed();
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceFirst('Exception: ', '');
-          _isSaving = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Rename Collection'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'Collection name'),
-            onSubmitted: (_) => _submit(),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
-              ),
-            ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: _isSaving ? null : _submit,
-          child: _isSaving
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Save'),
-        ),
-      ],
-    );
-  }
-}
-
-class _CreateCollectionDialog extends StatefulWidget {
-  final WidgetRef ref;
-  final VoidCallback onCreated;
-
-  const _CreateCollectionDialog({required this.ref, required this.onCreated});
-
-  @override
-  State<_CreateCollectionDialog> createState() => _CreateCollectionDialogState();
-}
-
-class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
-  final _controller = TextEditingController();
-  String? _error;
-  bool _isCreating = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final name = _controller.text.trim();
-    if (name.isEmpty) return;
-    setState(() {
-      _isCreating = true;
-      _error = null;
-    });
-    try {
-      await widget.ref.read(bookmarkActionsProvider).createCollection(name);
-      widget.onCreated();
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceFirst('Exception: ', '');
-          _isCreating = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('New Collection'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'Collection name'),
-            onSubmitted: (_) => _submit(),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
-              ),
-            ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: _isCreating ? null : _submit,
-          child: _isCreating
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Create'),
-        ),
-      ],
+      ref: ref,
+      onCreated: () => ref.invalidate(bookmarkCollectionsProvider),
     );
   }
 }

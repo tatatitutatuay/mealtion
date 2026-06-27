@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_client.dart';
@@ -35,7 +36,8 @@ class NotificationItem {
 
 final notificationsProvider = FutureProvider<List<NotificationItem>>((ref) async {
   final supabase = ref.watch(supabaseProvider);
-  final userId = supabase.auth.currentUser!.id;
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) return [];
 
   final rows = await supabase
       .from('notifications')
@@ -64,7 +66,11 @@ final notificationsProvider = FutureProvider<List<NotificationItem>>((ref) async
 
 final unreadNotificationCountProvider = StreamProvider<int>((ref) async* {
   final supabase = ref.watch(supabaseProvider);
-  final userId = supabase.auth.currentUser!.id;
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) {
+    yield 0;
+    return;
+  }
 
   // Initial count
   Future<int> fetchCount() async {
@@ -90,8 +96,8 @@ final unreadNotificationCountProvider = StreamProvider<int>((ref) async* {
         try {
           final count = await fetchCount();
           controller.add(count);
-        } catch (_) {
-          // Skip on transient error; next realtime event will retry
+        } catch (e) {
+          debugPrint('Transient error fetching notification count: $e');
         }
       },
     )

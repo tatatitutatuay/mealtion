@@ -30,6 +30,10 @@ jobs:
         working-directory: app
         run: flutter pub get
 
+      - name: Run tests with coverage
+        working-directory: app
+        run: flutter test --coverage
+
       - name: Run dart analyze (save to file)
         working-directory: app
         run: dart analyze --format=json > ../dart-analyze.json || true

@@ -9,6 +9,7 @@ import '../providers/engagement_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../home/providers/meal_detail_provider.dart';
 import '../../home/widgets/meal_detail_sheet.dart';
+import '../../home/widgets/meal_tags.dart';
 import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
 import 'friend_requests_screen.dart';
@@ -293,15 +294,15 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 Row(
                   children: [
                     if (post.price != null && (ref.read(authProvider)?.priceDisplayPrivacy ?? 'actual') != 'hidden') ...[
-                      _pillTag('${post.price!.toStringAsFixed(0)}฿', AppColors.tagGreen),
+                      MealTags.price(post.price!),
                       const SizedBox(width: 6),
                     ],
                     if (post.heaviness != null) ...[
-                      _heavinessTag(post.heaviness!),
+                      MealTags.heaviness(post.heaviness!),
                       const SizedBox(width: 6),
                     ],
                     if (post.feeling != null)
-                      _feelingTag(post.feeling!),
+                      MealTags.feeling(post.feeling!),
                   ],
                 ),
                 if (post.note != null && post.note!.isNotEmpty) ...[
@@ -408,35 +409,4 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     );
   }
 
-  Widget _pillTag(String label, Color bgColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-      ),
-      child: Text(label, style: AppTypography.c3.copyWith(
-          color: AppColors.textPrimary, fontSize: 10)),
-    );
-  }
-
-  Widget _heavinessTag(String heaviness) {
-    final (label, color) = switch (heaviness) {
-      'light' => ('Healthy', AppColors.tagGreen),
-      'satisfying' => ('Satisfying', AppColors.tagYellow),
-      'heavy' => ('Heavy', AppColors.tagRed),
-      _ => (heaviness, AppColors.grey100),
-    };
-    return _pillTag(label, color);
-  }
-
-  Widget _feelingTag(String feeling) {
-    final (label, color) = switch (feeling) {
-      'like' => ('Like', AppColors.tagGreen),
-      'neutral' => ('Neutral', AppColors.tagYellow),
-      'dislike' => ('Dislike', AppColors.tagRed),
-      _ => (feeling, AppColors.grey100),
-    };
-    return _pillTag(label, color);
-  }
 }

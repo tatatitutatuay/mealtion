@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/widgets/image_picker_sheet.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../friends/providers/profile_provider.dart';
 import '../../../core/supabase/supabase_client.dart';
@@ -94,7 +95,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final storagePath = '$userId/avatar.$ext';
         try {
           await supabase.storage.from('avatars').remove([storagePath]);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Failed to remove old avatar: $e');
+        }
         await supabase.storage.from('avatars').upload(storagePath, _pickedPhoto!);
         newPhotoUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
       }
@@ -104,7 +107,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final storagePath = '$userId/cover.$ext';
         try {
           await supabase.storage.from('covers').remove([storagePath]);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Failed to remove old cover: $e');
+        }
         await supabase.storage.from('covers').upload(storagePath, _pickedCover!);
         newCoverUrl = supabase.storage.from('covers').getPublicUrl(storagePath);
       }
@@ -157,38 +162,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 // Cover photo
                 GestureDetector(
-                  onTap: () => showModalBottomSheet(
+                  onTap: () => ImagePickerSheet.show(
                     context: context,
-                    builder: (ctx) => SafeArea(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.photo_outlined),
-                            title: const Text('Choose Cover from Gallery'),
-                            onTap: () { Navigator.pop(ctx); _pickCover(); },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.camera_alt_outlined),
-                            title: const Text('Take Cover Photo'),
-                            onTap: () { Navigator.pop(ctx); _takeCover(); },
-                          ),
-                          if (_pickedCover != null || _coverUrl != null)
-                            ListTile(
-                              leading: const Icon(Icons.delete_outline, color: AppColors.error),
-                              title: const Text('Remove Cover'),
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                setState(() {
-                                  _pickedCover = null;
-                                  _coverUrl = null;
-                                  _coverRemoved = true;
-                                });
-                              },
-                            ),
-                        ],
-                      ),
-                    ),
+                    galleryLabel: 'Choose Cover from Gallery',
+                    cameraLabel: 'Take Cover Photo',
+                    removeLabel: 'Remove Cover',
+                    canRemove: _pickedCover != null || _coverUrl != null,
+                    onGallery: _pickCover,
+                    onCamera: _takeCover,
+                    onRemove: () => setState(() {
+                      _pickedCover = null;
+                      _coverUrl = null;
+                      _coverRemoved = true;
+                    }),
                   ),
                   child: Container(
                     height: 222,
@@ -217,38 +203,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   right: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: () => showModalBottomSheet(
+                      onTap: () => ImagePickerSheet.show(
                         context: context,
-                        builder: (ctx) => SafeArea(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.photo_outlined),
-                                title: const Text('Choose from Gallery'),
-                                onTap: () { Navigator.pop(ctx); _pickPhoto(); },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.camera_alt_outlined),
-                                title: const Text('Take Photo'),
-                                onTap: () { Navigator.pop(ctx); _takePhoto(); },
-                              ),
-                              if (_pickedPhoto != null || _photoUrl != null)
-                                ListTile(
-                                  leading: const Icon(Icons.delete_outline, color: AppColors.error),
-                                  title: const Text('Remove Photo'),
-                                  onTap: () {
-                                    Navigator.pop(ctx);
-                                    setState(() {
-                                      _pickedPhoto = null;
-                                      _photoUrl = null;
-                                      _photoRemoved = true;
-                                    });
-                                  },
-                                ),
-                            ],
-                          ),
-                        ),
+                        galleryLabel: 'Choose from Gallery',
+                        cameraLabel: 'Take Photo',
+                        removeLabel: 'Remove Photo',
+                        canRemove: _pickedPhoto != null || _photoUrl != null,
+                        onGallery: _pickPhoto,
+                        onCamera: _takePhoto,
+                        onRemove: () => setState(() {
+                          _pickedPhoto = null;
+                          _photoUrl = null;
+                          _photoRemoved = true;
+                        }),
                       ),
                       child: Container(
                         width: 128,

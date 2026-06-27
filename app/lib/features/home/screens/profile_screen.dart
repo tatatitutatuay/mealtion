@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/widgets/stat_box.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../friends/providers/profile_provider.dart';
 import '../../friends/screens/friend_profile_screen.dart';
@@ -108,13 +109,13 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
                   child: Row(
                     children: [
-                      _statBox('Meals', '${data.totalMeals}'),
+                      StatBox(label: 'Meals', value: '${data.totalMeals}'),
                       const SizedBox(width: 10),
-                      _statBox('Foods', '${data.monthFoods}'),
+                      StatBox(label: 'Foods', value: '${data.monthFoods}'),
                       const SizedBox(width: 10),
-                      _statBox('Place', '${data.monthRestaurants}'),
+                      StatBox(label: 'Place', value: '${data.monthRestaurants}'),
                       const SizedBox(width: 10),
-                      _statBox('Friends', '${data.friendsCount}'),
+                      StatBox(label: 'Friends', value: '${data.friendsCount}'),
                     ],
                   ),
                 ),
@@ -181,26 +182,6 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(width: 7.5),
             Text(label, style: AppTypography.b5.copyWith(
                 color: AppColors.textPrimary, fontSize: 14)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statBox(String label, String value) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        decoration: BoxDecoration(
-          border: AppSpacing.cardBorder,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: AppTypography.s1.copyWith(
-                color: AppColors.textPrimary, fontSize: 18)),
-            Text(label, style: AppTypography.b5.copyWith(
-                color: AppColors.textPrimary, fontSize: 12)),
           ],
         ),
       ),

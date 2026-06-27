@@ -4,10 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/widgets/circle_icon_button.dart';
+import 'package:mealtion/core/widgets/meal_grid_tile.dart';
+import 'package:mealtion/core/widgets/pill_button.dart';
+import 'package:mealtion/core/widgets/stat_box.dart';
+import 'package:mealtion/core/widgets/user_avatar.dart';
 import '../providers/profile_provider.dart';
 import '../models/profile_data.dart';
 import '../../home/providers/gallery_provider.dart';
 import '../../home/widgets/meal_detail_sheet.dart';
+import '../../home/widgets/gallery_timeline.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -75,14 +81,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
             child: const Icon(Icons.arrow_back, size: 24, color: AppColors.textPrimary),
           ),
           const SizedBox(width: 16),
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.grey100,
-            backgroundImage: data.photoUrl != null ? NetworkImage(data.photoUrl!) : null,
-            child: data.photoUrl == null
-                ? Text(data.displayName[0].toUpperCase(), style: AppTypography.h5)
-                : null,
-          ),
+          UserAvatar(photoUrl: data.photoUrl, displayName: data.displayName),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -112,27 +111,9 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
       child: Row(
         children: [
-          Expanded(child: _statBox('Meals', '${data.totalMeals}')),
+          Expanded(child: StatBox(label: 'Meals', value: '${data.totalMeals}')),
           const SizedBox(width: 10),
-          Expanded(child: _statBox('Friends', '${data.friendsCount}')),
-        ],
-      ),
-    );
-  }
-
-  Widget _statBox(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      decoration: BoxDecoration(
-        border: AppSpacing.cardBorder,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
-      ),
-      child: Column(
-        children: [
-          Text(value, style: AppTypography.s1.copyWith(
-              color: AppColors.textPrimary, fontSize: 18)),
-          Text(label, style: AppTypography.b5.copyWith(
-              color: AppColors.textPrimary, fontSize: 12)),
+          Expanded(child: StatBox(label: 'Friends', value: '${data.friendsCount}')),
         ],
       ),
     );
@@ -143,11 +124,11 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 8),
       child: Row(
         children: [
-          _circleButton(Icons.chevron_left, _prevMonth),
+          CircleIconButton(icon: Icons.chevron_left, onTap: _prevMonth),
           const SizedBox(width: 5),
-          _pillButton(DateFormat('MMMM yyyy').format(_currentMonth)),
+          PillButton(label: DateFormat('MMMM yyyy').format(_currentMonth)),
           const SizedBox(width: 5),
-          _circleButton(Icons.chevron_right, _nextMonth),
+          CircleIconButton(icon: Icons.chevron_right, onTap: _nextMonth),
           const Spacer(),
           GestureDetector(
             onTap: () => setState(() => _isGridView = !_isGridView),
@@ -167,34 +148,6 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
     );
   }
 
-  Widget _circleButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 23,
-        height: 23,
-        decoration: const BoxDecoration(
-          border: AppSpacing.cardBorder,
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: Icon(icon, size: 14, color: AppColors.textPrimary),
-      ),
-    );
-  }
-
-  Widget _pillButton(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        border: AppSpacing.cardBorder,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
-      ),
-      child: Text(label, style: AppTypography.b5.copyWith(
-          color: AppColors.textPrimary, fontSize: 12)),
-    );
-  }
-
   Widget _gridView(List<GalleryItem> items) {
     return GridView.builder(
       padding: const EdgeInsets.all(4),
@@ -204,118 +157,17 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         mainAxisSpacing: 4,
       ),
       itemCount: items.length,
-      itemBuilder: (_, i) => GestureDetector(
+      itemBuilder: (_, i) => MealGridTile(
+        thumbnailUrl: items[i].thumbnailUrl,
         onTap: () => MealDetailSheet.show(context, items[i].mealId, canEdit: false),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
-          child: Image.network(items[i].thumbnailUrl, fit: BoxFit.cover),
-        ),
       ),
     );
   }
 
   Widget _timelineView(List<GalleryItem> items) {
-    final grouped = <String, List<GalleryItem>>{};
-    for (final item in items) {
-      final key = DateFormat('d MMM').format(item.date);
-      grouped.putIfAbsent(key, () => []).add(item);
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 16),
-      itemCount: grouped.length,
-      itemBuilder: (_, i) {
-        final entry = grouped.entries.elementAt(i);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 40,
-                child: Column(
-                  children: [
-                    Text(entry.key.split(' ').first,
-                        style: AppTypography.b5.copyWith(
-                            color: AppColors.textPrimary, fontSize: 12)),
-                    Text(entry.key.split(' ').last,
-                        style: AppTypography.b5.copyWith(
-                            color: AppColors.textPrimary, fontSize: 12)),
-                  ],
-                ),
-              ),
-              Container(width: 0.5, margin: const EdgeInsets.only(right: 8), color: AppColors.border),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: entry.value.map((item) => _timelineCard(item)).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _timelineCard(GalleryItem item) {
-    return GestureDetector(
-      onTap: () => MealDetailSheet.show(context, item.mealId, canEdit: false),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          border: AppSpacing.cardBorder,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(AppSpacing.radiusPhoto),
-                bottomLeft: Radius.circular(AppSpacing.radiusPhoto),
-              ),
-              child: Container(
-                width: 90,
-                height: 90,
-                color: AppColors.photoPlaceholder,
-                child: Image.network(item.thumbnailUrl, fit: BoxFit.cover),
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.foods.join(', '),
-                        style: AppTypography.s2.copyWith(
-                            color: AppColors.textPrimary, fontSize: 12),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    if (item.restaurantName != null) ...[
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Icon(Icons.place_outlined, size: 12, color: AppColors.textSecondary),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              '${item.restaurantName}${item.branchName != null ? ' (${item.branchName})' : ''}',
-                              style: AppTypography.b5.copyWith(
-                                  color: AppColors.textSecondary, fontSize: 12),
-                              maxLines: 1, overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return GalleryTimelineView(
+      items: items,
+      onTap: (item) => MealDetailSheet.show(context, item.mealId, canEdit: false),
     );
   }
 }

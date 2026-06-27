@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/widgets/meal_grid_tile.dart';
 import '../providers/bookmark_provider.dart';
 import '../../home/widgets/meal_detail_sheet.dart';
+import '../widgets/collection_name_dialog.dart';
 
 class CustomCollectionDetailScreen extends ConsumerWidget {
   final String collectionId;
@@ -68,36 +70,16 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
                       mainAxisSpacing: 4,
                     ),
                     itemCount: list.length,
-                    itemBuilder: (_, i) => _gridTile(context, list[i], list.map((m) => m.mealId).toList(), i),
+                    itemBuilder: (_, i) => MealGridTile(
+                      thumbnailUrl: list[i].thumbnailUrl,
+                      hasMultiplePhotos: list[i].photoCount > 1,
+                      borderRadius: 8,
+                      onTap: () => MealDetailSheet.showMultiple(context, list.map((m) => m.mealId).toList(), initialIndex: i),
+                    ),
                   );
                 },
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _gridTile(BuildContext context, CollectionMeal meal, List<String> allMealIds, int index) {
-    return GestureDetector(
-      onTap: () => MealDetailSheet.showMultiple(context, allMealIds, initialIndex: index),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(meal.thumbnailUrl, fit: BoxFit.cover),
-            if (meal.photoCount > 1)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                  child: const Icon(Icons.collections, color: AppColors.white, size: 12),
-                ),
-              ),
           ],
         ),
       ),
@@ -159,111 +141,15 @@ class CustomCollectionDetailScreen extends ConsumerWidget {
   }
 
   void _renameCollection(BuildContext context, WidgetRef ref) {
-    showDialog(
+    CollectionNameDialog.showRename(
       context: context,
-      builder: (ctx) => _RenameCollectionDialog(
-        collectionId: collectionId,
-        name: collectionName,
-        ref: ref,
-        onRenamed: () {
-          ref.invalidate(bookmarkCollectionsProvider);
-          ref.invalidate(collectionMealsProvider(collectionId));
-        },
-      ),
-    );
-  }
-}
-
-class _RenameCollectionDialog extends StatefulWidget {
-  final String collectionId;
-  final String name;
-  final WidgetRef ref;
-  final VoidCallback onRenamed;
-
-  const _RenameCollectionDialog({
-    required this.collectionId,
-    required this.name,
-    required this.ref,
-    required this.onRenamed,
-  });
-
-  @override
-  State<_RenameCollectionDialog> createState() => _RenameCollectionDialogState();
-}
-
-class _RenameCollectionDialogState extends State<_RenameCollectionDialog> {
-  late final TextEditingController _controller;
-  String? _error;
-  bool _isSaving = false;
-
-  @override
-  void initState() {
-    _controller = TextEditingController(text: widget.name);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final newName = _controller.text.trim();
-    if (newName.isEmpty || newName == widget.name) {
-      Navigator.pop(context);
-      return;
-    }
-    setState(() {
-      _isSaving = true;
-      _error = null;
-    });
-    try {
-      await widget.ref.read(bookmarkActionsProvider).renameCollection(widget.collectionId, newName);
-      widget.onRenamed();
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceFirst('Exception: ', '');
-          _isSaving = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Rename Collection'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'Collection name'),
-            onSubmitted: (_) => _submit(),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
-              ),
-            ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: _isSaving ? null : _submit,
-          child: _isSaving
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Save'),
-        ),
-      ],
+      ref: ref,
+      collectionId: collectionId,
+      currentName: collectionName,
+      onRenamed: () {
+        ref.invalidate(bookmarkCollectionsProvider);
+        ref.invalidate(collectionMealsProvider(collectionId));
+      },
     );
   }
 }

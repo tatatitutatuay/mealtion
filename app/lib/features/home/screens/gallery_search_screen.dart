@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
+import 'package:mealtion/core/widgets/meal_grid_tile.dart';
 import '../providers/gallery_provider.dart';
 import '../widgets/meal_detail_sheet.dart';
 
@@ -89,36 +90,16 @@ class _GallerySearchScreenState extends ConsumerState<GallerySearchScreen> {
                             mainAxisSpacing: 4,
                           ),
                           itemCount: items.length,
-                          itemBuilder: (_, i) => _gridTile(items[i]),
+                          itemBuilder: (_, i) => MealGridTile(
+                            thumbnailUrl: items[i].thumbnailUrl,
+                            hasMultiplePhotos: items[i].hasMultiplePhotos,
+                            borderRadius: 8,
+                            onTap: () => MealDetailSheet.show(context, items[i].mealId),
+                          ),
                         );
                       },
                     ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _gridTile(GalleryItem item) {
-    return GestureDetector(
-      onTap: () => MealDetailSheet.show(context, item.mealId),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(item.thumbnailUrl, fit: BoxFit.cover),
-            if (item.hasMultiplePhotos)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                  child: const Icon(Icons.collections, color: AppColors.white, size: 12),
-                ),
-              ),
           ],
         ),
       ),

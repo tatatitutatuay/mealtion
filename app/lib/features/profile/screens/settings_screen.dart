@@ -35,7 +35,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _loadSettings() async {
     final supabase = ref.read(supabaseProvider);
-    final userId = supabase.auth.currentUser!.id;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
     final row = await supabase
         .from('profiles')
         .select('primary_currency, price_display_privacy, notif_likes, notif_comments, notif_friend_requests')
@@ -55,7 +56,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _saveCurrency(String currency) async {
     setState(() => _currency = currency);
     final supabase = ref.read(supabaseProvider);
-    await supabase.from('profiles').update({'primary_currency': currency}).eq('id', supabase.auth.currentUser!.id);
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    await supabase.from('profiles').update({'primary_currency': currency}).eq('id', userId);
     // Update auth state in-place (invalidating authProvider would reset to null)
     final auth = ref.read(authProvider);
     if (auth != null) {
@@ -67,7 +70,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _savePricePrivacy(String privacy) async {
     setState(() => _pricePrivacy = privacy);
     final supabase = ref.read(supabaseProvider);
-    await supabase.from('profiles').update({'price_display_privacy': privacy}).eq('id', supabase.auth.currentUser!.id);
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    await supabase.from('profiles').update({'price_display_privacy': privacy}).eq('id', userId);
     final auth = ref.read(authProvider);
     if (auth != null) {
       ref.read(authProvider.notifier).state = auth.copyWith(priceDisplayPrivacy: privacy);
@@ -77,7 +82,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _saveNotifPref(String column, bool value) async {
     final supabase = ref.read(supabaseProvider);
-    await supabase.from('profiles').update({column: value}).eq('id', supabase.auth.currentUser!.id);
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    await supabase.from('profiles').update({column: value}).eq('id', userId);
   }
 
   void _deleteAccount() async {
@@ -101,9 +108,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isDeleting = true);
     try {
       final supabase = ref.read(supabaseProvider);
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
       await ref.read(pushNotificationProvider).unregisterToken();
       // Delete profile row (cascades to all user data)
-      await supabase.from('profiles').delete().eq('id', supabase.auth.currentUser!.id);
+      await supabase.from('profiles').delete().eq('id', userId);
       await supabase.auth.signOut();
       if (mounted) context.go('/auth/login');
     } catch (e) {

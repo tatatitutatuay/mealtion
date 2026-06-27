@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import '../models/auth_state.dart';
@@ -59,7 +60,9 @@ Future<AuthState> _fetchAuthState(SupabaseClient supabase, Session session) asyn
         priceThresholdHigh: (profile['price_threshold_high'] as num?)?.toDouble() ?? 50.0,
       );
     }
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('Failed to fetch auth state: $e');
+  }
   return AuthState.fromSession(session);
 }
 
@@ -71,7 +74,8 @@ Future<void> _ensureProfile(SupabaseClient supabase, String userId) async {
       'id': userId,
       'display_name': '',
     }, onConflict: 'id', ignoreDuplicates: true);
-  } catch (_) {
-    // Ignore — profile may already exist or RLS may block; meal save will surface the real error
+  } catch (e) {
+    // Profile may already exist or RLS may block; meal save will surface the real error
+    debugPrint('Profile upsert failed: $e');
   }
 }
