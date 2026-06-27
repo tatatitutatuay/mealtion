@@ -1,0 +1,13 @@
+.git
+app/android
+app/ios
+app/macos
+app/linux
+app/windows
+app/test
+app/.dart_tool
+app/lib
+supabase
+scripts
+docs
+*.md
