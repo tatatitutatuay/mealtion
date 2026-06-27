@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -66,17 +67,27 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       final notifier = ref.read(addMealProvider.notifier);
       notifier.reset();
 
-      // Download photos to temp files
+      // Download photos for editing (File on mobile, bytes on web)
       final photos = <AddMealPhoto>[];
       for (var i = 0; i < meal.photoUrls.length; i++) {
         final url = meal.photoUrls[i];
         try {
           final response = await http.get(Uri.parse(url));
-          final tempDir = await getTemporaryDirectory();
-          final filePath = '${tempDir.path}/edit_${widget.mealId}_$i.jpg';
-          final file = File(filePath);
-          await file.writeAsBytes(response.bodyBytes);
-          photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i, isExisting: true, storagePath: url));
+          if (kIsWeb) {
+            photos.add(AddMealPhoto(
+              localPath: url,
+              bytes: response.bodyBytes,
+              sortOrder: i,
+              isExisting: true,
+              storagePath: url,
+            ));
+          } else {
+            final tempDir = await getTemporaryDirectory();
+            final filePath = '${tempDir.path}/edit_${widget.mealId}_$i.jpg';
+            final file = File(filePath);
+            await file.writeAsBytes(response.bodyBytes);
+            photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i, isExisting: true, storagePath: url));
+          }
         } catch (e) {
           debugPrint('Failed to download photo $i: $e');
         }
@@ -141,9 +152,11 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
 
     final photos = <AddMealPhoto>[];
     for (var i = 0; i < files.length && i < remaining; i++) {
+      final xfile = files[i];
       photos.add(AddMealPhoto(
-        localPath: files[i].path,
-        file: File(files[i].path),
+        localPath: xfile.path,
+        file: kIsWeb ? null : File(xfile.path),
+        bytes: kIsWeb ? await xfile.readAsBytes() : null,
         sortOrder: currentCount + i,
       ));
     }
@@ -160,7 +173,12 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
 
     ref.read(addMealProvider.notifier).setPhotos([
       ...state.photos,
-      AddMealPhoto(localPath: file.path, file: File(file.path), sortOrder: state.photos.length),
+      AddMealPhoto(
+        localPath: file.path,
+        file: kIsWeb ? null : File(file.path),
+        bytes: kIsWeb ? await file.readAsBytes() : null,
+        sortOrder: state.photos.length,
+      ),
     ]);
   }
 

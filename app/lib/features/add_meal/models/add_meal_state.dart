@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 enum MealSource { restaurant, delivery, home }
@@ -9,12 +10,13 @@ enum Feeling { like, neutral, dislike }
 
 class AddMealPhoto {
   final String localPath;
-  final File file;
+  final File? file;
+  final Uint8List? bytes;
   int sortOrder;
   final bool isExisting;
   final String? storagePath;
 
-  AddMealPhoto({required this.localPath, required this.file, required this.sortOrder, this.isExisting = false, this.storagePath});
+  AddMealPhoto({required this.localPath, this.file, this.bytes, required this.sortOrder, this.isExisting = false, this.storagePath});
 }
 
 class AddMealFood {

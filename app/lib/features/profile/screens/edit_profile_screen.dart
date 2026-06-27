@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,9 +25,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _isSaving = false;
   String? _photoUrl;
   File? _pickedPhoto;
+  Uint8List? _pickedPhotoBytes;
   bool _photoRemoved = false;
   String? _coverUrl;
   File? _pickedCover;
+  Uint8List? _pickedCoverBytes;
   bool _coverRemoved = false;
   final _picker = ImagePicker();
 
@@ -55,28 +58,44 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _pickPhoto() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked != null) {
-      setState(() => _pickedPhoto = File(picked.path));
+      final bytes = kIsWeb ? await picked.readAsBytes() : null;
+      setState(() {
+        _pickedPhoto = kIsWeb ? null : File(picked.path);
+        _pickedPhotoBytes = bytes;
+      });
     }
   }
 
   Future<void> _takePhoto() async {
     final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
     if (picked != null) {
-      setState(() => _pickedPhoto = File(picked.path));
+      final bytes = kIsWeb ? await picked.readAsBytes() : null;
+      setState(() {
+        _pickedPhoto = kIsWeb ? null : File(picked.path);
+        _pickedPhotoBytes = bytes;
+      });
     }
   }
 
   Future<void> _pickCover() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked != null) {
-      setState(() => _pickedCover = File(picked.path));
+      final bytes = kIsWeb ? await picked.readAsBytes() : null;
+      setState(() {
+        _pickedCover = kIsWeb ? null : File(picked.path);
+        _pickedCoverBytes = bytes;
+      });
     }
   }
 
   Future<void> _takeCover() async {
     final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
     if (picked != null) {
-      setState(() => _pickedCover = File(picked.path));
+      final bytes = kIsWeb ? await picked.readAsBytes() : null;
+      setState(() {
+        _pickedCover = kIsWeb ? null : File(picked.path);
+        _pickedCoverBytes = bytes;
+      });
     }
   }
 
@@ -90,27 +109,35 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       String? newPhotoUrl;
       String? newCoverUrl;
 
-      if (_pickedPhoto != null) {
-        final ext = _pickedPhoto!.path.split('.').last;
+      if (_pickedPhoto != null || _pickedPhotoBytes != null) {
+        final ext = _pickedPhoto?.path.split('.').last ?? 'jpg';
         final storagePath = '$userId/avatar.$ext';
         try {
           await supabase.storage.from('avatars').remove([storagePath]);
         } catch (e) {
           debugPrint('Failed to remove old avatar: $e');
         }
-        await supabase.storage.from('avatars').upload(storagePath, _pickedPhoto!);
+        if (_pickedPhotoBytes != null) {
+          await supabase.storage.from('avatars').uploadBinary(storagePath, _pickedPhotoBytes!);
+        } else {
+          await supabase.storage.from('avatars').upload(storagePath, _pickedPhoto!);
+        }
         newPhotoUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
       }
 
-      if (_pickedCover != null) {
-        final ext = _pickedCover!.path.split('.').last;
+      if (_pickedCover != null || _pickedCoverBytes != null) {
+        final ext = _pickedCover?.path.split('.').last ?? 'jpg';
         final storagePath = '$userId/cover.$ext';
         try {
           await supabase.storage.from('covers').remove([storagePath]);
         } catch (e) {
           debugPrint('Failed to remove old cover: $e');
         }
-        await supabase.storage.from('covers').upload(storagePath, _pickedCover!);
+        if (_pickedCoverBytes != null) {
+          await supabase.storage.from('covers').uploadBinary(storagePath, _pickedCoverBytes!);
+        } else {
+          await supabase.storage.from('covers').upload(storagePath, _pickedCover!);
+        }
         newCoverUrl = supabase.storage.from('covers').getPublicUrl(storagePath);
       }
 
@@ -167,11 +194,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     galleryLabel: 'Choose Cover from Gallery',
                     cameraLabel: 'Take Cover Photo',
                     removeLabel: 'Remove Cover',
-                    canRemove: _pickedCover != null || _coverUrl != null,
+                    canRemove: _pickedCover != null || _pickedCoverBytes != null || _coverUrl != null,
                     onGallery: _pickCover,
                     onCamera: _takeCover,
                     onRemove: () => setState(() {
                       _pickedCover = null;
+                      _pickedCoverBytes = null;
                       _coverUrl = null;
                       _coverRemoved = true;
                     }),
@@ -180,20 +208,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     height: 222,
                     width: double.infinity,
                     color: AppColors.grey100,
-                    child: (_pickedCover != null
-                        ? Image.file(_pickedCover!, fit: BoxFit.cover)
-                        : (_coverUrl != null
-                            ? Image.network(_coverUrl!, fit: BoxFit.cover)
-                            : const Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.add_photo_alternate_outlined, size: 32, color: AppColors.grey500),
-                                    SizedBox(height: 4),
-                                    Text('Add Cover Photo', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
-                                  ],
-                                ),
-                              ))),
+                    child: (_pickedCoverBytes != null
+                        ? Image.memory(_pickedCoverBytes!, fit: BoxFit.cover)
+                        : (_pickedCover != null
+                            ? Image.file(_pickedCover!, fit: BoxFit.cover)
+                            : (_coverUrl != null
+                                ? Image.network(_coverUrl!, fit: BoxFit.cover)
+                                : const Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.add_photo_alternate_outlined, size: 32, color: AppColors.grey500),
+                                        SizedBox(height: 4),
+                                        Text('Add Cover Photo', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
+                                      ],
+                                    ),
+                                  )))),
                   ),
                 ),
                 // Avatar centered, bottom half overflows the cover
@@ -208,11 +238,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         galleryLabel: 'Choose from Gallery',
                         cameraLabel: 'Take Photo',
                         removeLabel: 'Remove Photo',
-                        canRemove: _pickedPhoto != null || _photoUrl != null,
+                        canRemove: _pickedPhoto != null || _pickedPhotoBytes != null || _photoUrl != null,
                         onGallery: _pickPhoto,
                         onCamera: _takePhoto,
                         onRemove: () => setState(() {
                           _pickedPhoto = null;
+                          _pickedPhotoBytes = null;
                           _photoUrl = null;
                           _photoRemoved = true;
                         }),
@@ -224,13 +255,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           shape: BoxShape.circle,
                           color: AppColors.grey100,
                           border: Border.all(color: AppColors.white, width: 3),
-                          image: _pickedPhoto != null
-                              ? DecorationImage(image: FileImage(_pickedPhoto!), fit: BoxFit.cover)
-                              : (_photoUrl != null
-                                  ? DecorationImage(image: NetworkImage(_photoUrl!), fit: BoxFit.cover)
-                                  : null),
+                          image: _pickedPhotoBytes != null
+                              ? DecorationImage(image: MemoryImage(_pickedPhotoBytes!), fit: BoxFit.cover)
+                              : (_pickedPhoto != null
+                                  ? DecorationImage(image: FileImage(_pickedPhoto!), fit: BoxFit.cover)
+                                  : (_photoUrl != null
+                                      ? DecorationImage(image: NetworkImage(_photoUrl!), fit: BoxFit.cover)
+                                      : null)),
                         ),
-                        child: (_pickedPhoto == null && _photoUrl == null)
+                        child: (_pickedPhoto == null && _pickedPhotoBytes == null && _photoUrl == null)
                             ? const Center(child: Icon(Icons.camera_alt, size: 32, color: AppColors.grey500))
                             : null,
                       ),

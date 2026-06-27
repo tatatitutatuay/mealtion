@@ -18,7 +18,7 @@ class PushNotificationService {
   PushNotificationService(this._ref);
 
   Future<void> init() async {
-    if (_initialized) return;
+    if (_initialized || kIsWeb) return;
     _initialized = true;
 
     try {
@@ -77,6 +77,7 @@ class PushNotificationService {
   }
 
   Future<void> _registerToken() async {
+    if (kIsWeb) return;
     final supabase = _ref.read(supabaseProvider);
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -94,6 +95,7 @@ class PushNotificationService {
   }
 
   Future<void> unregisterToken() async {
+    if (kIsWeb) return;
     final supabase = _ref.read(supabaseProvider);
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;

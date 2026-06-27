@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,7 @@ class _MealtionAppState extends ConsumerState<MealtionApp> {
     super.initState();
     // Listen for auth state changes and init push when authenticated
     ref.listenManual(authProvider, (previous, next) {
-      if (next != null) {
+      if (next != null && !kIsWeb) {
         ref.read(pushNotificationProvider).init();
       }
     });

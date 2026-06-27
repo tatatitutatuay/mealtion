@@ -76,9 +76,13 @@ class MealApi {
 
     for (var i = 0; i < state.photos.length; i++) {
       final photo = state.photos[i];
-      final ext = photo.file.path.split('.').last;
+      final ext = _extFromPath(photo.localPath);
       final storagePath = '$userId/$mealId/$i.$ext';
-      await _supabase.storage.from('meal-photos').upload(storagePath, photo.file);
+      if (photo.bytes != null) {
+        await _supabase.storage.from('meal-photos').uploadBinary(storagePath, photo.bytes!);
+      } else if (photo.file != null) {
+        await _supabase.storage.from('meal-photos').upload(storagePath, photo.file!);
+      }
       final publicUrl = _supabase.storage.from('meal-photos').getPublicUrl(storagePath);
       await _supabase.from('meal_photos').insert({
         'meal_id': mealId,
@@ -190,9 +194,13 @@ class MealApi {
     for (var i = 0; i < state.photos.length; i++) {
       final photo = state.photos[i];
       if (!photo.isExisting) {
-        final ext = photo.file.path.split('.').last;
+        final ext = _extFromPath(photo.localPath);
         final storagePath = '$userId/$mealId/$i.$ext';
-        await _supabase.storage.from('meal-photos').upload(storagePath, photo.file);
+        if (photo.bytes != null) {
+          await _supabase.storage.from('meal-photos').uploadBinary(storagePath, photo.bytes!);
+        } else if (photo.file != null) {
+          await _supabase.storage.from('meal-photos').upload(storagePath, photo.file!);
+        }
         final publicUrl = _supabase.storage.from('meal-photos').getPublicUrl(storagePath);
         await _supabase.from('meal_photos').insert({
           'meal_id': mealId,
@@ -299,5 +307,13 @@ class MealApi {
         _supabase.storage.from('meal-photos').remove([rawPath]);
       } catch (_) {}
     }
+  }
+
+  String _extFromPath(String path) {
+    final dot = path.lastIndexOf('.');
+    if (dot < 0 || dot == path.length - 1) return 'jpg';
+    final ext = path.substring(dot + 1).toLowerCase();
+    if (RegExp(r'^[a-z0-9]+$').hasMatch(ext) && ext.length <= 4) return ext;
+    return 'jpg';
   }
 }
