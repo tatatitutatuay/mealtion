@@ -59,6 +59,40 @@ class MealDetailSheet extends ConsumerStatefulWidget {
     );
   }
 
+  /// Show just the collection selector for a meal (bookmark action)
+  static Future<void> showCollectionSelector(BuildContext context, WidgetRef ref, String mealId) async {
+    final selected = await showModalBottomSheet<({String collectionId, bool alreadySaved})>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _CollectionSelectorSheet(mealId: mealId),
+    );
+
+    if (selected == null || !context.mounted) return;
+
+    final actions = ref.read(bookmarkActionsProvider);
+    try {
+      if (selected.alreadySaved) {
+        await actions.removeMealFromCollection(selected.collectionId, mealId);
+      } else {
+        await actions.addMealToCollection(selected.collectionId, mealId);
+      }
+      ref.invalidate(mealCollectionIdsProvider(mealId));
+      ref.invalidate(collectionMealsProvider(selected.collectionId));
+      ref.invalidate(bookmarkCollectionsProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(selected.alreadySaved ? 'Removed from collection' : 'Added to collection')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   @override
   ConsumerState<MealDetailSheet> createState() => _MealDetailSheetState();
 }

@@ -30,6 +30,17 @@ class AppColors {
   static const feelingNeutral = warning;
   static const feelingDislike = error;
 
+  // Tag background colors (from Figma)
+  static const tagGreen = Color(0xFFBDFFC1);
+  static const tagYellow = Color(0xFFF0F8B0);
+  static const tagRed = Color(0xFFFFAEAE);
+
+  // Photo placeholder
+  static const photoPlaceholder = Color(0xFFD9D9D9);
+
+  // Border (for outlined card style)
+  static const border = black;
+
   // Background
   static const background = grey50;
   static const surface = white;
@@ -38,4 +49,5 @@ class AppColors {
   static const textPrimary = black;
   static const textSecondary = grey900;
   static const textDisabled = grey500;
+  static const textFaded = Color(0x80000000); // rgba(0,0,0,0.5)
 }

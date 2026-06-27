@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTypography {
-  static const _noto = 'NotoSansThai';
+  static const _noto = 'IBMPlexSansThai';
   static const _inter = 'Inter';
 
   // Headers

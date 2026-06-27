@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
-import 'package:mealtion/core/theme/shadows.dart';
 import 'package:mealtion/core/theme/typography.dart';
-import 'package:mealtion/core/utils/price_level.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../models/home_data.dart';
+import '../screens/gallery_screen.dart';
 import 'meal_detail_sheet.dart';
 
 class RecentEntries extends ConsumerWidget {
@@ -21,7 +19,19 @@ class RecentEntries extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Recent entries', style: AppTypography.s2.copyWith(color: AppColors.textPrimary)),
+          Row(
+            children: [
+              Text('Recent', style: AppTypography.s2.copyWith(color: AppColors.textPrimary)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GalleryScreen()),
+                ),
+                child: Text('View All', style: AppTypography.c3.copyWith(
+                    color: AppColors.textFaded, fontSize: 10)),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           ...meals.map((meal) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -36,106 +46,118 @@ class RecentEntries extends ConsumerWidget {
     return GestureDetector(
       onTap: () => MealDetailSheet.show(context, meal.id),
       child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-        boxShadow: AppShadows.card,
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(AppSpacing.radiusXs),
-              bottomLeft: Radius.circular(AppSpacing.radiusXs),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppSpacing.radiusPhoto),
+                bottomLeft: Radius.circular(AppSpacing.radiusPhoto),
+              ),
+              child: Container(
+                width: 90,
+                height: 90,
+                color: AppColors.photoPlaceholder,
+                child: meal.thumbnailUrl != null
+                    ? Image.network(meal.thumbnailUrl!, fit: BoxFit.cover)
+                    : const Icon(Icons.restaurant, color: AppColors.grey500),
+              ),
             ),
-            child: Container(
-              width: 80,
-              height: 80,
-              color: AppColors.grey100,
-              child: meal.thumbnailUrl != null
-                  ? Image.network(meal.thumbnailUrl!, fit: BoxFit.cover)
-                  : const Icon(Icons.restaurant, color: AppColors.grey500),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meal.foods.join(', '),
-                    style: AppTypography.s2.copyWith(color: AppColors.textPrimary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  if (meal.restaurantName != null)
+            const SizedBox(width: 20),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      '${meal.restaurantName}${meal.branchName != null ? ' (${meal.branchName})' : ''}',
-                      style: AppTypography.b5.copyWith(color: AppColors.textSecondary),
+                      meal.foods.join(', '),
+                      style: AppTypography.s2.copyWith(
+                          color: AppColors.textPrimary, fontSize: 14),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (meal.price != null) ...[
-                        Text('${meal.price!.toStringAsFixed(0)} ฿',
-                            style: AppTypography.b6.copyWith(color: AppColors.textPrimary)),
-                        const SizedBox(width: 4),
-                        _priceLevelBadge(ref, meal.price!),
+                    const SizedBox(height: 2),
+                    if (meal.restaurantName != null)
+                      Row(
+                        children: [
+                          const Icon(Icons.place_outlined, size: 12, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              '${meal.restaurantName}${meal.branchName != null ? ' (${meal.branchName})' : ''}',
+                              style: AppTypography.b5.copyWith(
+                                  color: AppColors.textSecondary, fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (meal.price != null) ...[
+                          _pillTag('${meal.price!.toStringAsFixed(0)}฿', AppColors.tagGreen),
+                          const SizedBox(width: 6),
+                        ],
+                        if (meal.heaviness != null) ...[
+                          _heavinessTag(meal.heaviness!),
+                          const SizedBox(width: 6),
+                        ],
+                        if (meal.feeling != null)
+                          _feelingTag(meal.feeling!),
                       ],
-                      if (meal.price != null && meal.feeling != null)
-                        const SizedBox(width: 8),
-                      if (meal.feeling != null)
-                        _feelingTag(meal.feeling!),
-                      const Spacer(),
-                      const Icon(Icons.bookmark_border, size: 16, color: AppColors.grey500),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+            GestureDetector(
+              onTap: () => MealDetailSheet.showCollectionSelector(context, ref, meal.id),
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.bookmark_border, size: 18, color: AppColors.grey500),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _priceLevelBadge(WidgetRef ref, double price) {
-    final auth = ref.read(authProvider);
-    final level = calculatePriceLevel(
-      price,
-      auth?.priceThresholdLow ?? 10.0,
-      auth?.priceThresholdHigh ?? 50.0,
-    );
+  Widget _pillTag(String label, Color bgColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: level.color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
       ),
-      child: Text(level.label, style: AppTypography.c3.copyWith(color: level.color)),
+      child: Text(label, style: AppTypography.c3.copyWith(
+          color: AppColors.textPrimary, fontSize: 10)),
     );
+  }
+
+  Widget _heavinessTag(String heaviness) {
+    final (label, color) = switch (heaviness) {
+      'light' => ('Healthy', AppColors.tagGreen),
+      'satisfying' => ('Satisfying', AppColors.tagYellow),
+      'heavy' => ('Heavy', AppColors.tagRed),
+      _ => (heaviness, AppColors.grey100),
+    };
+    return _pillTag(label, color);
   }
 
   Widget _feelingTag(String feeling) {
     final (label, color) = switch (feeling) {
-      'like' => ('Like', AppColors.success),
-      'neutral' => ('Neutral', AppColors.warning),
-      'dislike' => ('Dislike', AppColors.error),
-      _ => (feeling, AppColors.grey500),
+      'like' => ('Like', AppColors.tagGreen),
+      'neutral' => ('Neutral', AppColors.tagYellow),
+      'dislike' => ('Dislike', AppColors.tagRed),
+      _ => (feeling, AppColors.grey100),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
-      ),
-      child: Text(label, style: AppTypography.c3.copyWith(color: color)),
-    );
+    return _pillTag(label, color);
   }
 }
