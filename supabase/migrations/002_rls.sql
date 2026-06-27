@@ -41,6 +41,13 @@ CREATE POLICY "restaurants_select_own" ON public.restaurants
 CREATE POLICY "restaurants_insert_own" ON public.restaurants
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Branches: owner only
+CREATE POLICY "branches_select_own" ON public.branches
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "branches_insert_own" ON public.branches
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- Meals: owner sees all, friends see non-private
 CREATE POLICY "meals_select_own" ON public.meals
   FOR SELECT USING (auth.uid() = user_id);
