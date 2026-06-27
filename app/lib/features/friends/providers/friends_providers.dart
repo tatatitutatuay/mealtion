@@ -20,7 +20,8 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
       .map((r) => r['friend_user_id'] as String)
       .toList();
 
-  if (friendIds.isEmpty) return [];
+  // Include own posts in the feed
+  final feedUserIds = [...friendIds, userId];
 
   final rows = await supabase
       .from('meals')
@@ -35,7 +36,7 @@ final friendsFeedProvider = FutureProvider<List<FeedPost>>((ref) async {
         likes(id, user_id),
         comments(id, user_id, body, created_at)
       ''')
-      .inFilter('user_id', friendIds)
+      .inFilter('user_id', feedUserIds)
       .eq('is_private', false)
       .order('date', ascending: false)
       .order('time', ascending: false)

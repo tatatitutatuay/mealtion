@@ -22,6 +22,10 @@ class CommentSheet extends ConsumerStatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) => CommentSheet(mealId: mealId, currentUserId: currentUserId),
     );
   }
@@ -78,50 +82,65 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
   Widget build(BuildContext context) {
     final comments = ref.watch(mealCommentsProvider(widget.mealId));
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Comment', style: AppTypography.s1),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                  ],
-                ),
+    return SizedBox(
+      height: screenHeight * 0.7,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey100,
+                borderRadius: BorderRadius.circular(2),
               ),
-              const Divider(height: 1),
-              Expanded(
-                child: comments.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Center(child: Text('Error: $err')),
-                  data: (list) => list.isEmpty
-                      ? const Center(child: Text('No comments yet'))
-                      : ListView.separated(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          itemCount: list.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (_, i) {
-                            final c = list[i];
-                            final isOwner = c.userId == widget.currentUserId;
-                            return Row(
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Comments', style: AppTypography.s1.copyWith(fontSize: 18)),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close, size: 22, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: AppColors.grey100),
+            Expanded(
+              child: comments.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, _) => Center(child: Text('Error: $err')),
+                data: (list) => list.isEmpty
+                    ? Center(
+                        child: Text('No comments yet',
+                            style: AppTypography.b3.copyWith(color: AppColors.textSecondary)),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.layoutMargin, vertical: 16),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, i) {
+                          final c = list[i];
+                          final isOwner = c.userId == widget.currentUserId;
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: AppSpacing.cardBorder,
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                            ),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 CircleAvatar(
-                                  radius: 16,
+                                  radius: 18,
                                   backgroundColor: AppColors.grey100,
                                   backgroundImage: c.photoUrl != null ? NetworkImage(c.photoUrl!) : null,
                                   child: c.photoUrl == null
@@ -139,58 +158,80 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                                           Text(c.displayName, style: AppTypography.b4),
                                           const SizedBox(width: 6),
                                           Text('• ${_timeAgo(c.createdAt)}',
-                                              style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                                              style: AppTypography.b5
+                                                  .copyWith(color: AppColors.textSecondary)),
                                           if (isOwner) ...[
                                             const Spacer(),
                                             GestureDetector(
                                               onTap: () => _delete(c.id),
-                                              child: const Icon(Icons.delete_outline, size: 16, color: AppColors.grey500),
+                                              child: const Icon(Icons.delete_outline,
+                                                  size: 16, color: AppColors.grey500),
                                             ),
                                           ],
                                         ],
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: 4),
                                       Text(c.body, style: AppTypography.b3),
                                     ],
                                   ),
                                 ),
                               ],
-                            );
-                          },
-                        ),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText: 'Write a comment...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        ),
-                        onSubmitted: (_) => _send(),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: _isSending ? null : _send,
-                      icon: _isSending
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.send, color: AppColors.primary),
-                    ),
-                  ],
-                ),
               ),
-            ],
-          );
-        },
+            ),
+            const Divider(height: 1, color: AppColors.grey100),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: 'Write a comment...',
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                        ),
+                      ),
+                      onSubmitted: (_) => _send(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _isSending ? null : _send,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey500,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                      ),
+                      child: _isSending
+                          ? const Center(
+                              child: SizedBox(
+                                  width: 18, height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white)))
+                          : const Icon(Icons.send, color: AppColors.white, size: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
