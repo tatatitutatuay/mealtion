@@ -36,7 +36,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search ID',
+                hintText: 'Search username',
                 prefixIcon: const Icon(Icons.search, color: AppColors.grey500),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(

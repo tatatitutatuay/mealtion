@@ -1,4 +1,9 @@
 -- ============================================================
+-- 0. Enable pg_net extension (required for net.http_post in triggers)
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- ============================================================
 -- 1. Device tokens table for push notifications
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.device_tokens (
@@ -147,7 +152,28 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================
--- 3. Trigger to call push notification edge function on insert
+-- 3. App settings table for push notification config
+--    (Supabase doesn't allow custom GUCs, so we use a regular table)
+--    Run these manually in SQL Editor with your actual values:
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- app_settings contains secrets (FCM push URL/secret) — no client access
+-- The trigger reads it via SECURITY DEFINER, which bypasses RLS
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.app_settings FROM anon, authenticated;
+
+-- Insert push config (replace values with your actual ones):
+-- INSERT INTO public.app_settings (key, value) VALUES
+--   ('fcm_push_url', 'https://ssiaxokyvoqxroaavurx.functions.supabase.co/push-notification'),
+--   ('fcm_push_secret', '<same-random-string-as-FCM_PUSH_SECRET>')
+-- ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- ============================================================
+-- 4. Trigger to call push notification edge function on insert
 -- ============================================================
 -- After a notification is inserted, call the edge function to send push
 -- This uses pg_net extension (available in Supabase by default)
@@ -184,19 +210,25 @@ BEGIN
   SELECT value INTO push_url FROM public.app_settings WHERE key = 'fcm_push_url';
   SELECT value INTO push_secret FROM public.app_settings WHERE key = 'fcm_push_secret';
 
-  IF push_url IS NULL OR push_secret IS NULL THEN
+  IF push_url IS NULL OR push_secret IS NULL OR push_url = '' THEN
     RETURN NEW;
   END IF;
 
   -- Call edge function asynchronously (fire-and-forget)
-  PERFORM net.http_post(
-    url := push_url,
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || push_secret
-    ),
-    body := payload
-  );
+  -- Wrap in exception block so push failures never block the notification insert
+  BEGIN
+    PERFORM net.http_post(
+      url := push_url,
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer ' || push_secret
+      ),
+      body := payload
+    );
+  EXCEPTION WHEN OTHERS THEN
+    -- Push failed (invalid URL, network error, etc.) — notification still saved
+    RETURN NEW;
+  END;
 
   RETURN NEW;
 END;
@@ -207,19 +239,3 @@ CREATE TRIGGER trg_push_notification
   AFTER INSERT ON public.notifications
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_push_notification();
-
--- ============================================================
--- 4. App settings table for push notification config
---    (Supabase doesn't allow custom GUCs, so we use a regular table)
---    Run these manually in SQL Editor with your actual values:
--- ============================================================
-CREATE TABLE IF NOT EXISTS public.app_settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-);
-
--- Insert push config (replace values with your actual ones):
--- INSERT INTO public.app_settings (key, value) VALUES
---   ('fcm_push_url', 'https://ssiaxokyvoqxroaavurx.functions.supabase.co/push-notification'),
---   ('fcm_push_secret', '<same-random-string-as-FCM_PUSH_SECRET>')
--- ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
