@@ -37,37 +37,32 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
 
   Future<void> _deleteSelected() async {
     final actions = ref.read(bookmarkActionsProvider);
-    for (final id in _selected) {
-      await actions.deleteCollection(id);
+    try {
+      for (final id in _selected) {
+        await actions.deleteCollection(id);
+      }
+      ref.invalidate(bookmarkCollectionsProvider);
+      _exitSelectMode();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
     }
-    ref.invalidate(bookmarkCollectionsProvider);
-    _exitSelectMode();
   }
 
   Future<void> _renameCollection(BookmarkCollection collection) async {
-    final controller = TextEditingController(text: collection.name);
-    final newName = await showDialog<String>(
+    await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename Collection'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Collection name'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (ctx) => _RenameCollectionDialog(
+        collection: collection,
+        ref: ref,
+        onRenamed: () {
+          ref.invalidate(bookmarkCollectionsProvider);
+        },
       ),
     );
-    if (newName != null && newName.isNotEmpty && newName != collection.name) {
-      await ref.read(bookmarkActionsProvider).renameCollection(collection.id, newName);
-      ref.invalidate(bookmarkCollectionsProvider);
-    }
   }
 
   @override
@@ -85,8 +80,8 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
                   ? () {
                       final id = _selected.first;
                       final list = collections.valueOrNull ?? [];
-                      final col = list.firstWhere((c) => c.id == id);
-                      _renameCollection(col);
+                      final col = list.where((c) => c.id == id).firstOrNull;
+                      if (col != null) _renameCollection(col);
                     }
                   : null,
             ),
@@ -114,7 +109,7 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.layoutMargin),
           children: [
-            Text('Base', style: AppTypography.s2),
+            const Text('Base', style: AppTypography.s2),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -132,7 +127,7 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
               ],
             ),
             const SizedBox(height: 32),
-            Text('Your', style: AppTypography.s2),
+            const Text('Your', style: AppTypography.s2),
             const SizedBox(height: 12),
             collections.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -268,36 +263,181 @@ class _BookmarkCollectionsScreenState extends ConsumerState<BookmarkCollectionsS
   }
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New Collection'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Collection name'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              final name = controller.text.trim();
-              if (name.isEmpty) return;
-              try {
-                await ref.read(bookmarkActionsProvider).createCollection(name);
-                ref.invalidate(bookmarkCollectionsProvider);
-                if (ctx.mounted) Navigator.pop(ctx);
-              } catch (e) {
-                if (ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                }
-              }
-            },
-            child: const Text('Create'),
+      builder: (ctx) => _CreateCollectionDialog(ref: ref, onCreated: () {
+        ref.invalidate(bookmarkCollectionsProvider);
+      }),
+    );
+  }
+}
+
+class _RenameCollectionDialog extends StatefulWidget {
+  final BookmarkCollection collection;
+  final WidgetRef ref;
+  final VoidCallback onRenamed;
+
+  const _RenameCollectionDialog({
+    required this.collection,
+    required this.ref,
+    required this.onRenamed,
+  });
+
+  @override
+  State<_RenameCollectionDialog> createState() => _RenameCollectionDialogState();
+}
+
+class _RenameCollectionDialogState extends State<_RenameCollectionDialog> {
+  late final TextEditingController _controller;
+  String? _error;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    _controller = TextEditingController(text: widget.collection.name);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final newName = _controller.text.trim();
+    if (newName.isEmpty || newName == widget.collection.name) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await widget.ref.read(bookmarkActionsProvider).renameCollection(widget.collection.id, newName);
+      widget.onRenamed();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Rename Collection'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Collection name'),
+            onSubmitted: (_) => _submit(),
           ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              ),
+            ),
         ],
       ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: _isSaving ? null : _submit,
+          child: _isSaving
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
+class _CreateCollectionDialog extends StatefulWidget {
+  final WidgetRef ref;
+  final VoidCallback onCreated;
+
+  const _CreateCollectionDialog({required this.ref, required this.onCreated});
+
+  @override
+  State<_CreateCollectionDialog> createState() => _CreateCollectionDialogState();
+}
+
+class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+  bool _isCreating = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final name = _controller.text.trim();
+    if (name.isEmpty) return;
+    setState(() {
+      _isCreating = true;
+      _error = null;
+    });
+    try {
+      await widget.ref.read(bookmarkActionsProvider).createCollection(name);
+      widget.onCreated();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isCreating = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('New Collection'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Collection name'),
+            onSubmitted: (_) => _submit(),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: _isCreating ? null : _submit,
+          child: _isCreating
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Create'),
+        ),
+      ],
     );
   }
 }

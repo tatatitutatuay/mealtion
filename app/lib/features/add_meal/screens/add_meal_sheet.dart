@@ -5,11 +5,18 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
+import 'package:mealtion/core/theme/spacing.dart';
+import 'package:mealtion/core/theme/typography.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/add_meal_state.dart';
 import '../providers/add_meal_provider.dart';
 import '../providers/draft_provider.dart';
 import '../providers/meal_api_provider.dart';
+import '../../home/providers/home_provider.dart';
+import '../../home/providers/gallery_provider.dart';
+import '../../home/providers/meal_detail_provider.dart';
+import '../../bookmarks/providers/bookmark_provider.dart';
+import '../../friends/providers/profile_provider.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/food_chips.dart';
 import '../widgets/source_selector.dart';
@@ -17,7 +24,6 @@ import '../widgets/price_input.dart';
 import '../widgets/heaviness_feeling_selector.dart';
 import '../widgets/restaurant_search.dart';
 import '../widgets/tag_input.dart';
-import '../../home/providers/meal_detail_provider.dart';
 
 class AddMealSheet extends ConsumerStatefulWidget {
   final String? mealId;
@@ -230,10 +236,17 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
       final api = ref.read(mealApiProvider);
       if (widget.mealId != null) {
         await api.updateMeal(widget.mealId!, state);
+        ref.invalidate(mealDetailProvider(widget.mealId!));
       } else {
         await api.createMeal(state);
       }
       ref.read(addMealProvider.notifier).reset();
+      // Refresh all screens that show meal data
+      ref.invalidate(homeDashboardProvider);
+      ref.invalidate(galleryProvider);
+      ref.invalidate(basePlaceBookmarksProvider);
+      ref.invalidate(baseFoodBookmarksProvider);
+      ref.invalidate(myProfileProvider);
       if (mounted) Navigator.pop(context, widget.mealId ?? true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -314,32 +327,34 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
             body: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () async {
+                    GestureDetector(
+                      onTap: () async {
                         if (await _onWillPop() && context.mounted) Navigator.pop(context);
                       },
+                      child: const Icon(Icons.close, size: 24, color: AppColors.textPrimary),
                     ),
                     Text(
                       widget.mealId != null ? 'Edit Meal' : 'Add Meal',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: AppTypography.s1.copyWith(
+                          color: AppColors.textPrimary, fontSize: 18),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_note),
-                      onPressed: () => _showDrafts(),
+                    GestureDetector(
+                      onTap: () => _showDrafts(),
+                      child: const Icon(Icons.edit_note, size: 24, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, thickness: 0.5, color: AppColors.border),
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.layoutMargin, vertical: 16),
                   children: [
                     PhotoPicker(
                       photos: state.photos,
@@ -352,10 +367,8 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.calendar_today, size: 18),
-                            label: Text(DateFormat('d MMM yyyy').format(state.date)),
-                            onPressed: () async {
+                          child: GestureDetector(
+                            onTap: () async {
                               final date = await showDatePicker(
                                 context: context,
                                 initialDate: state.date,
@@ -364,20 +377,54 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                               );
                               if (date != null) ref.read(addMealProvider.notifier).setDate(date);
                             },
+                            child: Container(
+                              height: 28,
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              decoration: BoxDecoration(
+                                border: AppSpacing.cardBorder,
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.calendar_today, size: 12, color: AppColors.textPrimary),
+                                  const SizedBox(width: 6),
+                                  Text(DateFormat('d MMM yyyy').format(state.date),
+                                      style: AppTypography.b5.copyWith(
+                                          color: AppColors.textPrimary, fontSize: 12)),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.access_time, size: 18),
-                            label: Text(state.time.format(context)),
-                            onPressed: () async {
+                          child: GestureDetector(
+                            onTap: () async {
                               final time = await showTimePicker(
                                 context: context,
                                 initialTime: state.time,
                               );
                               if (time != null) ref.read(addMealProvider.notifier).setTime(time);
                             },
+                            child: Container(
+                              height: 28,
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              decoration: BoxDecoration(
+                                border: AppSpacing.cardBorder,
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.access_time, size: 12, color: AppColors.textPrimary),
+                                  const SizedBox(width: 6),
+                                  Text(state.time.format(context),
+                                      style: AppTypography.b5.copyWith(
+                                          color: AppColors.textPrimary, fontSize: 12)),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -431,28 +478,77 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
                       controller: _noteController,
                       maxLines: 3,
                       maxLength: 500,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Add a note...',
-                        border: OutlineInputBorder(),
+                        hintStyle: AppTypography.b5.copyWith(color: AppColors.textFaded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                        ),
                       ),
+                      style: AppTypography.b5.copyWith(color: AppColors.textPrimary),
                       onChanged: (v) => ref.read(addMealProvider.notifier).setNote(v),
                     ),
                     const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text('Private Meal'),
-                      subtitle: const Text('Only you can see this meal'),
-                      value: state.isPrivate,
-                      onChanged: (v) => ref.read(addMealProvider.notifier).setPrivate(v),
+                    GestureDetector(
+                      onTap: () => ref.read(addMealProvider.notifier).setPrivate(!state.isPrivate),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          border: AppSpacing.cardBorder,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(state.isPrivate ? Icons.lock : Icons.lock_open,
+                                size: 16, color: AppColors.textPrimary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Private Meal',
+                                      style: AppTypography.b5.copyWith(
+                                          color: AppColors.textPrimary, fontSize: 12)),
+                                  Text('Only you can see this meal',
+                                      style: AppTypography.b5.copyWith(
+                                          color: AppColors.textFaded, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: state.isPrivate,
+                              onChanged: (v) => ref.read(addMealProvider.notifier).setPrivate(v),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: _isSaving ? null : _save,
-                      icon: _isSaving
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
-                          : const Icon(Icons.save),
-                      label: Text(_isSaving ? 'Saving...' : 'Save Meal'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                    GestureDetector(
+                      onTap: _isSaving ? null : _save,
+                      child: Container(
+                        width: double.infinity,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          border: AppSpacing.cardBorder,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                        ),
+                        alignment: Alignment.center,
+                        child: _isSaving
+                            ? const SizedBox(width: 18, height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary))
+                            : Text(_isSaving ? 'Saving...' : 'Save Meal',
+                                style: AppTypography.buttonMedium.copyWith(color: AppColors.textPrimary)),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -470,7 +566,8 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+      child: Text(title, style: AppTypography.s2.copyWith(
+          color: AppColors.textPrimary, fontSize: 16)),
     );
   }
 }

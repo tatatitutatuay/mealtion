@@ -32,7 +32,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         child: Column(
           children: [
             _header(),
-            const Divider(height: 1),
             Expanded(
               child: gallery.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -63,89 +62,131 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   Widget _header() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
       child: Column(
         children: [
+          // Title + bookmark button
           Row(
             children: [
-              Text('Gallery', style: AppTypography.h5),
+              Text('Gallery', style: AppTypography.s1.copyWith(
+                  color: AppColors.textPrimary, fontSize: 20)),
               const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.bookmark_border_outlined),
-                onPressed: () => Navigator.of(context).push(
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const BookmarkCollectionsScreen()),
+                ),
+                child: Container(
+                  width: 37,
+                  height: 37,
+                  decoration: const BoxDecoration(
+                    border: AppSpacing.cardBorder,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.bookmark_border, size: 16, color: AppColors.textPrimary),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
+          // Search bar (bordered)
           GestureDetector(
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const GallerySearchScreen()),
             ),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              height: 28,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: AppColors.grey50,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                border: AppSpacing.cardBorder,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, size: 18, color: AppColors.grey500),
-                  const SizedBox(width: 8),
-                  Text('Search meal', style: AppTypography.b3.copyWith(color: AppColors.grey500)),
+                  const Icon(Icons.search, size: 11, color: AppColors.textFaded),
+                  const SizedBox(width: 10),
+                  Text('Search meal', style: AppTypography.b5.copyWith(
+                      color: const Color(0x4D000000), fontSize: 12)),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 12),
+          // Month nav + view toggle
           Row(
             children: [
-              IconButton(icon: const Icon(Icons.chevron_left), onPressed: _prevMonth, visualDensity: VisualDensity.compact),
-              Text(DateFormat('MMMM yyyy').format(_currentMonth), style: AppTypography.s2),
-              IconButton(icon: const Icon(Icons.chevron_right), onPressed: _nextMonth, visualDensity: VisualDensity.compact),
+              _circleButton(Icons.chevron_left, _prevMonth),
+              const SizedBox(width: 5),
+              _pillButton(DateFormat('MMMM yyyy').format(_currentMonth)),
+              const SizedBox(width: 5),
+              _circleButton(Icons.chevron_right, _nextMonth),
               const Spacer(),
               _viewToggle(),
             ],
           ),
+          const SizedBox(height: 12),
         ],
       ),
+    );
+  }
+
+  Widget _circleButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 23,
+        height: 23,
+        decoration: const BoxDecoration(
+          border: AppSpacing.cardBorder,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 14, color: AppColors.textPrimary),
+      ),
+    );
+  }
+
+  Widget _pillButton(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        border: AppSpacing.cardBorder,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+      ),
+      child: Text(label, style: AppTypography.b5.copyWith(
+          color: AppColors.textPrimary, fontSize: 12)),
     );
   }
 
   Widget _viewToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.grey100,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _toggleButton(Icons.view_list_outlined, !_isGridView, () => setState(() => _isGridView = false)),
-          _toggleButton(Icons.grid_view_outlined, _isGridView, () => setState(() => _isGridView = true)),
-        ],
-      ),
-    );
-  }
-
-  Widget _toggleButton(IconData icon, bool selected, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => setState(() => _isGridView = !_isGridView),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        height: 23,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
         ),
-        child: Icon(icon, size: 16, color: selected ? AppColors.textPrimary : AppColors.grey500),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_isGridView ? Icons.view_list_outlined : Icons.align_horizontal_left,
+                size: 11, color: AppColors.textPrimary),
+            const SizedBox(width: 10),
+            const VerticalDivider(width: 1, thickness: 0.5, color: AppColors.border),
+            const SizedBox(width: 10),
+            Icon(_isGridView ? Icons.grid_view_outlined : Icons.table_rows_outlined,
+                size: 12, color: AppColors.textPrimary),
+          ],
+        ),
       ),
     );
   }
 
   Widget _gridView(List<GalleryItem> items) {
     return GridView.builder(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 4,
@@ -160,7 +201,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     return GestureDetector(
       onTap: () => MealDetailSheet.show(context, item.mealId),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -189,111 +230,150 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
       itemCount: grouped.length,
       itemBuilder: (_, i) {
         final entry = grouped.entries.elementAt(i);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(entry.key, style: AppTypography.s2.copyWith(color: AppColors.textSecondary)),
-            ),
-            ...entry.value.map((item) => _timelineCard(item)),
-            const SizedBox(height: 16),
-          ],
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Date column
+              SizedBox(
+                width: 40,
+                child: Column(
+                  children: [
+                    Text(entry.key.split(' ').first,
+                        style: AppTypography.b5.copyWith(
+                            color: AppColors.textPrimary, fontSize: 12)),
+                    Text(entry.key.split(' ').last,
+                        style: AppTypography.b5.copyWith(
+                            color: AppColors.textPrimary, fontSize: 12)),
+                  ],
+                ),
+              ),
+              // Vertical line
+              Container(width: 0.5, margin: const EdgeInsets.only(right: 8), color: AppColors.border),
+              // Cards
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: entry.value.map((item) => _timelineCard(item)).toList(),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
   Widget _timelineCard(GalleryItem item) {
-    final feelingColor = switch (item.feeling) {
-      'like' => AppColors.success,
-      'neutral' => AppColors.warning,
-      'dislike' => AppColors.error,
-      _ => AppColors.grey500,
-    };
-    final feelingLabel = switch (item.feeling) {
-      'like' => 'Like',
-      'neutral' => 'Neutral',
-      'dislike' => 'Dislike',
-      _ => '',
-    };
-    final heavinessLabel = switch (item.heaviness) {
-      'light' => 'Light',
-      'satisfying' => 'Satisfying',
-      'heavy' => 'Heavy',
-      _ => '',
-    };
-
     return GestureDetector(
       onTap: () => MealDetailSheet.show(context, item.mealId),
       child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(AppSpacing.radiusXs),
-              bottomLeft: Radius.circular(AppSpacing.radiusXs),
-            ),
-            child: Image.network(item.thumbnailUrl, width: 90, height: 90, fit: BoxFit.cover),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.foods.join(', '), style: AppTypography.b4, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  if (item.restaurantName != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '${item.restaurantName}${item.branchName != null ? ' • ${item.branchName}' : ''}',
-                      style: AppTypography.b5.copyWith(color: AppColors.textSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      if (item.price != null)
-                        _chip('${item.price!.toStringAsFixed(0)} ฿', AppColors.grey100),
-                      if (heavinessLabel.isNotEmpty)
-                        _chip(heavinessLabel, AppColors.warning.withValues(alpha: 0.15)),
-                      if (feelingLabel.isNotEmpty)
-                        _chip(feelingLabel, feelingColor.withValues(alpha: 0.15)),
-                    ],
-                  ),
-                ],
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPhoto),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppSpacing.radiusPhoto),
+                bottomLeft: Radius.circular(AppSpacing.radiusPhoto),
+              ),
+              child: Container(
+                width: 90,
+                height: 90,
+                color: AppColors.photoPlaceholder,
+                child: Image.network(item.thumbnailUrl, fit: BoxFit.cover),
               ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.foods.join(', '),
+                        style: AppTypography.s2.copyWith(
+                            color: AppColors.textPrimary, fontSize: 12),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    if (item.restaurantName != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(Icons.place_outlined, size: 12, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              '${item.restaurantName}${item.branchName != null ? ' (${item.branchName})' : ''}',
+                              style: AppTypography.b5.copyWith(
+                                  color: AppColors.textSecondary, fontSize: 12),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (item.price != null) ...[
+                          _pillTag('${item.price!.toStringAsFixed(0)}฿', AppColors.tagGreen),
+                          const SizedBox(width: 6),
+                        ],
+                        if (item.heaviness != null) ...[
+                          _heavinessTag(item.heaviness!),
+                          const SizedBox(width: 6),
+                        ],
+                        if (item.feeling != null)
+                          _feelingTag(item.feeling!),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _chip(String label, Color bg) {
+  Widget _pillTag(String label, Color bgColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
       ),
-      child: Text(label, style: AppTypography.c3),
+      child: Text(label, style: AppTypography.c3.copyWith(
+          color: AppColors.textPrimary, fontSize: 10)),
     );
+  }
+
+  Widget _heavinessTag(String heaviness) {
+    final (label, color) = switch (heaviness) {
+      'light' => ('Healthy', AppColors.tagGreen),
+      'satisfying' => ('Satisfying', AppColors.tagYellow),
+      'heavy' => ('Heavy', AppColors.tagRed),
+      _ => (heaviness, AppColors.grey100),
+    };
+    return _pillTag(label, color);
+  }
+
+  Widget _feelingTag(String feeling) {
+    final (label, color) = switch (feeling) {
+      'like' => ('Like', AppColors.tagGreen),
+      'neutral' => ('Neutral', AppColors.tagYellow),
+      'dislike' => ('Dislike', AppColors.tagRed),
+      _ => (feeling, AppColors.grey100),
+    };
+    return _pillTag(label, color);
   }
 }

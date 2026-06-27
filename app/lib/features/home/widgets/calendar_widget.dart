@@ -63,7 +63,6 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
       case CalendarFilterMode.health:
         return AppColors.primary;
       case CalendarFilterMode.heaviness:
-        // Pick the "heaviest" meal of the day
         const order = {'heavy': 3, 'satisfying': 2, 'light': 1};
         final heaviest = infos.where((m) => m.heaviness != null).fold<CalendarMealInfo?>(null, (a, b) {
           if (a == null) return b;
@@ -78,7 +77,6 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           _ => AppColors.primary,
         };
       case CalendarFilterMode.feeling:
-        // Pick the "worst" feeling of the day
         const order = {'dislike': 3, 'neutral': 2, 'like': 1};
         final worst = infos.where((m) => m.feeling != null).fold<CalendarMealInfo?>(null, (a, b) {
           if (a == null) return b;
@@ -106,100 +104,170 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   Widget build(BuildContext context) {
     final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     final firstWeekday = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday % 7;
+    const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              IconButton(icon: const Icon(Icons.chevron_left), onPressed: _prevMonth),
-              Text(DateFormat('MMMM yyyy').format(_currentMonth),
-                  style: AppTypography.s2.copyWith(color: AppColors.textPrimary)),
-              IconButton(icon: const Icon(Icons.chevron_right), onPressed: _nextMonth),
-              const Spacer(),
-              GestureDetector(
-                onTap: _cycleFilter,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.grey100,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+      child: Container(
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Header row: month nav + filter pill
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Row(
+                children: [
+                  // Month nav group
+                  Row(
                     children: [
-                      const Icon(Icons.tune, size: 14, color: AppColors.primary),
-                      const SizedBox(width: 4),
-                      Text(_filterLabels[_filterMode]!,
-                          style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.textSecondary),
+                      _circleButton(Icons.chevron_left, _prevMonth),
+                      const SizedBox(width: 5),
+                      _pillButton(DateFormat('MMMM yyyy').format(_currentMonth)),
+                      const SizedBox(width: 5),
+                      _circleButton(Icons.chevron_right, _nextMonth),
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              childAspectRatio: 1,
-            ),
-            itemCount: firstWeekday + daysInMonth,
-            itemBuilder: (context, index) {
-              if (index < firstWeekday) return const SizedBox.shrink();
-              final day = index - firstWeekday + 1;
-              final date = DateTime(_currentMonth.year, _currentMonth.month, day);
-              final hasMeal = widget.mealDates.any((d) =>
-                  d.year == date.year && d.month == date.month && d.day == date.day);
-              final isToday = date.year == DateTime.now().year &&
-                  date.month == DateTime.now().month &&
-                  date.day == DateTime.now().day;
-              final dotColor = _dotColorForDate(date);
-
-              return GestureDetector(
-                onTap: hasMeal ? () => _openMealsForDate(date) : null,
-                child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: isToday ? BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ) : null,
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$day',
-                        style: AppTypography.b5.copyWith(
-                          color: isToday ? AppColors.white : AppColors.textPrimary,
-                          fontWeight: isToday ? FontWeight.w600 : null,
-                        ),
+                  const Spacer(),
+                  // Filter pill
+                  GestureDetector(
+                    onTap: _cycleFilter,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: AppSpacing.cardBorder,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.tune, size: 11, color: AppColors.textPrimary),
+                          const SizedBox(width: 5),
+                          Text(_filterLabels[_filterMode]!,
+                              style: AppTypography.b5.copyWith(
+                                  color: AppColors.textPrimary, fontSize: 12)),
+                          const SizedBox(width: 5),
+                          const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.textPrimary),
+                        ],
                       ),
                     ),
-                    if (hasMeal)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: dotColor,
-                          shape: BoxShape.circle,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 15),
+            const Divider(height: 0, thickness: 0.5, color: AppColors.border),
+            const SizedBox(height: 15),
+            // Day headers
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Row(
+                children: dayHeaders.map((d) => Expanded(
+                  child: Center(
+                    child: Text(d,
+                        style: AppTypography.b5.copyWith(
+                            color: AppColors.textPrimary, fontSize: 12)),
+                  ),
+                )).toList(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Date grid
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: firstWeekday + daysInMonth,
+                itemBuilder: (context, index) {
+                  if (index < firstWeekday) return const SizedBox.shrink();
+                  final day = index - firstWeekday + 1;
+                  final date = DateTime(_currentMonth.year, _currentMonth.month, day);
+                  final hasMeal = widget.mealDates.any((d) =>
+                      d.year == date.year && d.month == date.month && d.day == date.day);
+                  final isToday = date.year == DateTime.now().year &&
+                      date.month == DateTime.now().month &&
+                      date.day == DateTime.now().day;
+                  final dotColor = _dotColorForDate(date);
+
+                  return GestureDetector(
+                    onTap: hasMeal ? () => _openMealsForDate(date) : null,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 23,
+                          height: 23,
+                          decoration: BoxDecoration(
+                            color: isToday ? AppColors.primary : null,
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$day',
+                            style: AppTypography.b5.copyWith(
+                              color: isToday ? AppColors.white : AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: isToday ? FontWeight.w500 : FontWeight.w400,
+                            ),
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-                ),
-              );
-            },
-          ),
-        ],
+                        if (hasMeal) ...[
+                          const SizedBox(height: 2),
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: dotColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _circleButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 23,
+        height: 23,
+        decoration: const BoxDecoration(
+          border: AppSpacing.cardBorder,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 14, color: AppColors.textPrimary),
+      ),
+    );
+  }
+
+  Widget _pillButton(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        border: AppSpacing.cardBorder,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+      ),
+      child: Text(label,
+          style: AppTypography.b5.copyWith(color: AppColors.textPrimary, fontSize: 12)),
     );
   }
 }

@@ -42,6 +42,9 @@ dependencies:
   http: ^1.6.0
   path_provider: ^2.1.6
   shared_preferences: ^2.5.5
+  firebase_core: ^3.13.0
+  firebase_messaging: ^15.2.0
+  flutter_local_notifications: ^18.0.0
 
 dev_dependencies:
   flutter_test:
@@ -68,13 +71,13 @@ flutter:
     - assets/fonts/
 
   fonts:
-    - family: NotoSansThai
+    - family: IBMPlexSansThai
       fonts:
-        - asset: assets/fonts/NotoSansThai-Regular.ttf
+        - asset: assets/fonts/IBMPlexSansThai-Regular.ttf
           weight: 400
-        - asset: assets/fonts/NotoSansThai-Medium.ttf
+        - asset: assets/fonts/IBMPlexSansThai-Medium.ttf
           weight: 500
-        - asset: assets/fonts/NotoSansThai-SemiBold.ttf
+        - asset: assets/fonts/IBMPlexSansThai-SemiBold.ttf
           weight: 600
     - family: Inter
       fonts:

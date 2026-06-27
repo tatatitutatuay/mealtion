@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealtion/core/theme/colors.dart';
+import 'package:mealtion/core/theme/spacing.dart';
+import 'package:mealtion/core/theme/typography.dart';
 import '../../../core/supabase/supabase_client.dart';
 
 final tagSuggestionsProvider = FutureProvider.family<List<String>, String>((ref, query) async {
@@ -68,13 +71,31 @@ class _TagInputState extends ConsumerState<TagInput> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 8,
-          runSpacing: 4,
+          spacing: 6,
+          runSpacing: 6,
           children: [
             ...widget.tags.map((tag) {
-              return Chip(
-                label: Text(tag),
-                onDeleted: () => widget.onRemove(tag),
+              return GestureDetector(
+                onTap: () => widget.onRemove(tag),
+                child: Container(
+                  height: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.tagYellow,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(tag,
+                          style: AppTypography.b5.copyWith(
+                              color: AppColors.textPrimary, fontSize: 12)),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.close, size: 12, color: AppColors.textPrimary),
+                    ],
+                  ),
+                ),
               );
             }),
             SizedBox(
@@ -82,12 +103,26 @@ class _TagInputState extends ConsumerState<TagInput> {
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Add tag...',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  hintStyle: AppTypography.c3.copyWith(color: AppColors.textFaded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                    borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                    borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                    borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   isDense: true,
                 ),
+                style: AppTypography.b5.copyWith(
+                    color: AppColors.textPrimary, fontSize: 12),
                 onChanged: (v) => setState(() => _query = v),
                 onSubmitted: (_) => _submit(),
                 textInputAction: TextInputAction.done,
@@ -96,17 +131,28 @@ class _TagInputState extends ConsumerState<TagInput> {
           ],
         ),
         if (filtered.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Wrap(
             spacing: 6,
             runSpacing: 4,
-            children: filtered.map((s) => ActionChip(
-              label: Text(s),
-              onPressed: () {
+            children: filtered.map((s) => GestureDetector(
+              onTap: () {
                 widget.onAdd(s);
                 _controller.clear();
                 setState(() => _query = '');
               },
+              child: Container(
+                height: 28,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  border: AppSpacing.cardBorder,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                ),
+                alignment: Alignment.center,
+                child: Text(s,
+                    style: AppTypography.b5.copyWith(
+                        color: AppColors.textPrimary, fontSize: 12)),
+              ),
             )).toList(),
           ),
         ],

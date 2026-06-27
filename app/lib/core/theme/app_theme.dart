@@ -30,7 +30,7 @@ class AppTheme {
       foregroundColor: AppColors.textPrimary,
       titleTextStyle: AppTypography.s1.copyWith(color: AppColors.textPrimary),
     ),
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       type: BottomNavigationBarType.fixed,
       backgroundColor: AppColors.surface,
       selectedItemColor: AppColors.primary,
@@ -38,7 +38,7 @@ class AppTheme {
       selectedLabelStyle: AppTypography.b6,
       unselectedLabelStyle: AppTypography.b5,
     ),
-    dividerTheme: DividerThemeData(
+    dividerTheme: const DividerThemeData(
       color: AppColors.grey100,
       thickness: 1,
       space: 0,

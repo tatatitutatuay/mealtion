@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mealtion/core/theme/colors.dart';
+import 'package:mealtion/core/theme/spacing.dart';
+import 'package:mealtion/core/theme/typography.dart';
 
 class PriceInput extends StatefulWidget {
   final double? price;
@@ -35,10 +37,10 @@ class _PriceInputState extends State<PriceInput> {
 
   Color _levelColor(String level) {
     switch (level) {
-      case 'Affordable': return AppColors.success;
-      case 'Moderate': return AppColors.warning;
-      case 'Expensive': return AppColors.error;
-      default: return AppColors.grey500;
+      case 'Affordable': return AppColors.tagGreen;
+      case 'Moderate': return AppColors.tagYellow;
+      case 'Expensive': return AppColors.tagRed;
+      default: return AppColors.grey100;
     }
   }
 
@@ -52,11 +54,26 @@ class _PriceInputState extends State<PriceInput> {
       children: [
         TextField(
           controller: _controller,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             prefixText: '\$ ',
+            prefixStyle: AppTypography.b5.copyWith(color: AppColors.textPrimary),
             hintText: '0.00',
-            border: OutlineInputBorder(),
+            hintStyle: AppTypography.b5.copyWith(color: AppColors.textFaded),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+              borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+              borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+              borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           ),
+          style: AppTypography.b5.copyWith(color: AppColors.textPrimary, fontSize: 12),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
           onChanged: (v) {
@@ -65,19 +82,24 @@ class _PriceInputState extends State<PriceInput> {
           },
         ),
         if (level != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                height: 28,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: _levelColor(level).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: _levelColor(level),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                 ),
-                child: Text(level, style: TextStyle(color: _levelColor(level), fontSize: 12)),
+                alignment: Alignment.center,
+                child: Text(level,
+                    style: AppTypography.b5.copyWith(
+                        color: AppColors.textPrimary, fontSize: 12)),
               ),
               const SizedBox(width: 8),
-              Text('Based on your thresholds', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
+              Text('Based on your thresholds',
+                  style: AppTypography.b5.copyWith(color: AppColors.textFaded, fontSize: 12)),
             ],
           ),
         ],

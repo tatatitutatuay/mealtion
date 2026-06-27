@@ -22,12 +22,14 @@ class BaseBookmarkItem {
   final String? subtitle;
   final String? thumbnailUrl;
   final int mealCount;
+  final List<String> mealIds;
 
   BaseBookmarkItem({
     required this.name,
     this.subtitle,
     this.thumbnailUrl,
     this.mealCount = 0,
+    this.mealIds = const [],
   });
 }
 
@@ -40,7 +42,13 @@ final bookmarkCollectionsProvider = FutureProvider<List<BookmarkCollection>>((re
       .from('bookmark_collections')
       .select('''
         id, name, cover_key,
-        bookmark_items(id)
+        bookmark_items(
+          id,
+          meals!inner(
+            id, date,
+            meal_photos(id, storage_path, sort_order)
+          )
+        )
       ''')
       .eq('user_id', auth.id)
       .order('created_at', ascending: false);
@@ -49,10 +57,34 @@ final bookmarkCollectionsProvider = FutureProvider<List<BookmarkCollection>>((re
       .cast<Map<String, dynamic>>()
       .map((r) {
         final items = (r['bookmark_items'] as List<dynamic>?) ?? [];
+
+        // Find the latest meal's photo as cover
+        String? coverUrl;
+        if (r['cover_key'] != null) {
+          coverUrl = r['cover_key'] as String?;
+        } else {
+          String? latestDate;
+          for (final item in items) {
+            final meal = (item as Map<String, dynamic>)['meals'] as Map<String, dynamic>?;
+            if (meal == null) continue;
+            final mealDate = meal['date'] as String;
+            if (latestDate == null || mealDate.compareTo(latestDate) > 0) {
+              latestDate = mealDate;
+              final photos = (meal['meal_photos'] as List<dynamic>?)
+                  ?.cast<Map<String, dynamic>>()
+                  .where((p) => p['storage_path'] != null)
+                  .toList();
+              if (photos != null && photos.isNotEmpty) {
+                coverUrl = resolvePhotoUrl(supabase, photos.first['storage_path'] as String);
+              }
+            }
+          }
+        }
+
         return BookmarkCollection(
           id: r['id'] as String,
           name: r['name'] as String,
-          coverKey: r['cover_key'] as String?,
+          coverKey: coverUrl,
           itemCount: items.length,
         );
       })
@@ -67,6 +99,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
   final rows = await supabase
       .from('meals')
       .select('''
+        id,
         restaurants(id, name),
         branches(id, name),
         meal_photos(id, storage_path, sort_order)
@@ -84,6 +117,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
     final name = restaurant['name'] as String;
     final branchName = branch?['name'] as String?;
     final key = '$name|${branchName ?? ''}';
+    final mealId = row['id'] as String;
 
     final photos = (row['meal_photos'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
@@ -97,6 +131,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
         subtitle: existing.subtitle,
         thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null),
         mealCount: existing.mealCount + 1,
+        mealIds: [...existing.mealIds, mealId],
       );
     } else {
       grouped[key] = BaseBookmarkItem(
@@ -104,6 +139,7 @@ final basePlaceBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) 
         subtitle: branchName,
         thumbnailUrl: photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null,
         mealCount: 1,
+        mealIds: [mealId],
       );
     }
   }
@@ -122,20 +158,17 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
       .from('meal_foods')
       .select('''
         food_name,
-        meals!inner(id, user_id, date),
-        meals.meal_photos(id, storage_path, sort_order)
+        meals!inner(id, user_id, date, meal_photos(id, storage_path, sort_order))
       ''')
-      .eq('meals.user_id', auth.id)
-      .order('meals.date', ascending: false);
+      .eq('meals.user_id', auth.id);
 
   final grouped = <String, BaseBookmarkItem>{};
   for (final row in (rows as List<dynamic>).cast<Map<String, dynamic>>()) {
     final name = row['food_name'] as String;
-    final meals = row['meals'] as List<dynamic>?;
-    if (meals == null || meals.isEmpty) continue;
+    final meal = row['meals'] as Map<String, dynamic>?;
+    if (meal == null) continue;
 
-    final firstMeal = meals.first as Map<String, dynamic>;
-    final photos = (firstMeal['meal_photos'] as List<dynamic>?)
+    final photos = (meal['meal_photos'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
         .where((p) => p['storage_path'] != null)
         .toList() ?? [];
@@ -146,12 +179,14 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
         name: existing.name,
         thumbnailUrl: existing.thumbnailUrl ?? (photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null),
         mealCount: existing.mealCount + 1,
+        mealIds: [...existing.mealIds, meal['id'] as String],
       );
     } else {
       grouped[name] = BaseBookmarkItem(
         name: name,
         thumbnailUrl: photos.isNotEmpty ? resolvePhotoUrl(supabase, photos.first['storage_path'] as String) : null,
         mealCount: 1,
+        mealIds: [meal['id'] as String],
       );
     }
   }
@@ -159,6 +194,23 @@ final baseFoodBookmarksProvider = FutureProvider<List<BaseBookmarkItem>>((ref) a
   final items = grouped.values.toList();
   items.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   return items;
+});
+
+/// Set of collection IDs that already contain [mealId]
+final mealCollectionIdsProvider = FutureProvider.family<Set<String>, String>((ref, mealId) async {
+  final auth = ref.watch(authProvider);
+  if (auth == null) return {};
+  final supabase = ref.watch(supabaseProvider);
+
+  final rows = await supabase
+      .from('bookmark_items')
+      .select('collection_id')
+      .eq('meal_id', mealId)
+      .eq('user_id', auth.id);
+
+  return (rows as List<dynamic>)
+      .map((r) => r['collection_id'] as String)
+      .toSet();
 });
 
 final collectionMealsProvider = FutureProvider.family<List<CollectionMeal>, String>((ref, collectionId) async {
@@ -237,6 +289,15 @@ class BookmarkActions {
     final userId = _ref.read(authProvider)?.id;
     if (userId == null) throw Exception('Not authenticated');
 
+    // Check for duplicate name
+    final existing = await _supabase
+        .from('bookmark_collections')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('name', name)
+        .maybeSingle();
+    if (existing != null) throw Exception('A collection with this name already exists');
+
     final rows = await _supabase.from('bookmark_collections').insert({
       'user_id': userId,
       'name': name,
@@ -250,6 +311,19 @@ class BookmarkActions {
   }
 
   Future<void> renameCollection(String collectionId, String newName) async {
+    final userId = _ref.read(authProvider)?.id;
+    if (userId == null) throw Exception('Not authenticated');
+
+    // Check for duplicate name (excluding the one being renamed)
+    final existing = await _supabase
+        .from('bookmark_collections')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('name', newName)
+        .neq('id', collectionId)
+        .maybeSingle();
+    if (existing != null) throw Exception('A collection with this name already exists');
+
     await _supabase.from('bookmark_collections').update({'name': newName}).eq('id', collectionId);
   }
 
@@ -257,11 +331,11 @@ class BookmarkActions {
     final userId = _ref.read(authProvider)?.id;
     if (userId == null) throw Exception('Not authenticated');
 
-    await _supabase.from('bookmark_items').insert({
+    await _supabase.from('bookmark_items').upsert({
       'collection_id': collectionId,
       'meal_id': mealId,
       'user_id': userId,
-    });
+    }, onConflict: 'collection_id,meal_id');
   }
 
   Future<void> removeMealFromCollection(String collectionId, String mealId) async {

@@ -23,48 +23,52 @@ class GreetingBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: AppColors.grey100,
-            backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
-            child: photoUrl == null
-                ? Text(displayName[0].toUpperCase(),
-                    style: AppTypography.s1.copyWith(color: AppColors.grey500))
-                : null,
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Hello, $displayName!',
-                    style: AppTypography.s1.copyWith(color: AppColors.textPrimary)),
-                Text('How was your meal?',
-                    style: AppTypography.b3.copyWith(color: AppColors.textSecondary)),
+                    style: AppTypography.s1.copyWith(
+                        color: AppColors.textPrimary, fontSize: 20)),
+                Text('How was your meal',
+                    style: AppTypography.b5.copyWith(
+                        color: AppColors.textPrimary, fontSize: 12)),
               ],
             ),
           ),
           Stack(
+            clipBehavior: Clip.none,
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                color: AppColors.textSecondary,
-                onPressed: onNotificationTap,
+              GestureDetector(
+                onTap: onNotificationTap,
+                child: Container(
+                  width: 37,
+                  height: 37,
+                  decoration: const BoxDecoration(
+                    border: AppSpacing.cardBorder,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.notifications_none_rounded,
+                      size: 18, color: AppColors.textPrimary),
+                ),
               ),
               if (notificationCount > 0)
                 Positioned(
-                  right: 8,
-                  top: 8,
+                  right: -4,
+                  top: -4,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    width: 18,
+                    height: 18,
                     decoration: const BoxDecoration(
-                      color: AppColors.error,
+                      color: AppColors.tagRed,
                       shape: BoxShape.circle,
                     ),
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    alignment: Alignment.center,
                     child: Text(
                       notificationCount > 9 ? '9+' : '$notificationCount',
-                      style: AppTypography.c3.copyWith(color: AppColors.white),
+                      style: AppTypography.c3.copyWith(
+                          color: AppColors.textPrimary, fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
                   ),

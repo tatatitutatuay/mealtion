@@ -100,7 +100,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                     builder: (_) => UserSearchScreen(userId: user.id),
                   ),
                 ),
-                child: Text('View', style: AppTypography.buttonMedium),
+                child: const Text('View', style: AppTypography.buttonMedium),
               ),
       ),
     );

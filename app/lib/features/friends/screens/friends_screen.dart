@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
-import 'package:mealtion/core/theme/shadows.dart';
 import 'package:mealtion/core/theme/typography.dart';
 import '../models/friends_models.dart';
 import '../providers/friends_providers.dart';
 import '../providers/engagement_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../home/providers/meal_detail_provider.dart';
 import '../../home/widgets/meal_detail_sheet.dart';
 import '../widgets/comment_sheet.dart';
 import 'connect_screen.dart';
@@ -28,6 +28,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     try {
       await ref.read(engagementProvider).toggleLike(mealId);
       ref.invalidate(friendsFeedProvider);
+      ref.invalidate(mealDetailProvider(mealId));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,51 +48,84 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   Widget build(BuildContext context) {
     final pendingCount = ref.watch(pendingRequestsProvider).valueOrNull?.length ?? 0;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Friends'),
-        actions: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            _header(pendingCount),
+            const SizedBox(height: 12),
+            _tabBar(),
+            Expanded(
+              child: _tabIndex == 0 ? _feedTab() : _friendsTab(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _header(int pendingCount) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
+      child: Row(
+        children: [
+          Text('Friends', style: AppTypography.s1.copyWith(
+              color: AppColors.textPrimary, fontSize: 20)),
+          const Spacer(),
           Stack(
             clipBehavior: Clip.none,
             children: [
-              IconButton(
-                icon: const Icon(Icons.mail_outline),
-                onPressed: () => Navigator.of(context).push(
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
+                ),
+                child: Container(
+                  width: 37,
+                  height: 37,
+                  decoration: const BoxDecoration(
+                    border: AppSpacing.cardBorder,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.mail_outline, size: 16, color: AppColors.textPrimary),
                 ),
               ),
               if (pendingCount > 0)
                 Positioned(
-                  right: 4,
-                  top: 4,
+                  right: -4,
+                  top: -4,
                   child: Container(
-                    padding: const EdgeInsets.all(3),
+                    width: 18,
+                    height: 18,
                     decoration: const BoxDecoration(
-                      color: AppColors.error,
+                      color: AppColors.tagRed,
                       shape: BoxShape.circle,
                     ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    alignment: Alignment.center,
                     child: Text(
                       '$pendingCount',
-                      style: const TextStyle(color: AppColors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: AppTypography.c3.copyWith(
+                          color: AppColors.textPrimary, fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.person_add_outlined),
-            onPressed: () => Navigator.of(context).push(
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ConnectScreen()),
             ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _tabBar(),
-          Expanded(
-            child: _tabIndex == 0 ? _feedTab() : _friendsTab(),
+            child: Container(
+              width: 37,
+              height: 37,
+              decoration: const BoxDecoration(
+                border: AppSpacing.cardBorder,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(Icons.person_add_outlined, size: 16, color: AppColors.textPrimary),
+            ),
           ),
         ],
       ),
@@ -99,14 +133,20 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   Widget _tabBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
-      child: Row(
-        children: [
-          _tab('Feed', 0),
-          const SizedBox(width: 24),
-          _tab('Friends', 1),
-        ],
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _tab('Feed', 0),
+            _tab('Friends', 1),
+          ],
+        ),
       ),
     );
   }
@@ -115,19 +155,20 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final selected = _tabIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _tabIndex = index),
-      child: Column(
-        children: [
-          Text(label, style: (selected ? AppTypography.s2 : AppTypography.b3).copyWith(
-            color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-          )),
-          if (selected)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              height: 2,
-              width: 24,
-              color: AppColors.primary,
+      child: Container(
+        width: 90,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        decoration: BoxDecoration(
+          border: selected ? AppSpacing.cardBorder : null,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+        ),
+        child: Text(label,
+            style: AppTypography.b5.copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
             ),
-        ],
+            textAlign: TextAlign.center),
       ),
     );
   }
@@ -140,10 +181,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       data: (posts) => posts.isEmpty
           ? const Center(child: Text('No posts from friends yet'))
           : ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.layoutMargin),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
               itemCount: posts.length,
               itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: 20),
                 child: _feedPostCard(posts[i]),
               ),
             ),
@@ -158,7 +200,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       data: (list) => list.isEmpty
           ? const Center(child: Text('No friends yet'))
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
               itemCount: list.length,
               itemBuilder: (_, i) => _friendTile(list[i]),
             ),
@@ -166,124 +209,147 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   Widget _feedPostCard(FeedPost post) {
-    final feelingColor = switch (post.feeling) {
-      'like' => AppColors.success,
-      'neutral' => AppColors.warning,
-      'dislike' => AppColors.error,
-      _ => AppColors.grey500,
-    };
-    final feelingLabel = switch (post.feeling) {
-      'like' => 'Like',
-      'neutral' => 'Neutral',
-      'dislike' => 'Dislike',
-      _ => '',
-    };
-
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-        boxShadow: AppShadows.card,
+        border: AppSpacing.cardBorder,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: avatar + name + time + more
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.grey100,
-                  backgroundImage: post.photoUrl != null ? NetworkImage(post.photoUrl!) : null,
-                  child: post.photoUrl == null
-                      ? Text(post.displayName[0].toUpperCase(),
-                          style: AppTypography.b6.copyWith(color: AppColors.textSecondary))
-                      : null,
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: post.userId)),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 17,
+                        backgroundColor: AppColors.grey100,
+                        backgroundImage: post.photoUrl != null ? NetworkImage(post.photoUrl!) : null,
+                        child: post.photoUrl == null
+                            ? Text(post.displayName[0].toUpperCase(),
+                                style: AppTypography.b6.copyWith(color: AppColors.textSecondary))
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(post.displayName,
+                              style: AppTypography.b5.copyWith(
+                                  color: AppColors.textPrimary, fontSize: 12)),
+                          Text('2h ago',
+                              style: AppTypography.c3.copyWith(
+                                  color: AppColors.textFaded, fontSize: 10)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(child: Text(post.displayName, style: AppTypography.s2)),
+                const Spacer(),
+                const Icon(Icons.more_horiz, size: 24, color: AppColors.textPrimary),
               ],
             ),
           ),
+          // Photo
           GestureDetector(
             onTap: () => MealDetailSheet.show(context, post.id, canEdit: false),
-            child: ClipRRect(
-            borderRadius: BorderRadius.circular(0),
             child: Container(
-              height: 200,
+              height: 247.5,
               width: double.infinity,
-              color: AppColors.grey100,
+              color: AppColors.photoPlaceholder,
               child: post.thumbnailUrl != null
                   ? Image.network(post.thumbnailUrl!, fit: BoxFit.cover)
                   : const Icon(Icons.restaurant, size: 48, color: AppColors.grey500),
             ),
-            ),
           ),
+          // Content
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(post.foods.join(', '), style: AppTypography.s2),
+                Text(post.foods.join(', '),
+                    style: AppTypography.b5.copyWith(
+                        color: AppColors.textPrimary, fontSize: 12)),
                 const SizedBox(height: 2),
                 if (post.restaurantName != null)
-                  Text('${post.restaurantName}${post.branchName != null ? ' (${post.branchName})' : ''}',
-                      style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                  Row(
+                    children: [
+                      const Icon(Icons.place_outlined, size: 12, color: AppColors.textPrimary),
+                      const SizedBox(width: 4),
+                      Text('${post.restaurantName}${post.branchName != null ? ' (${post.branchName})' : ''}',
+                          style: AppTypography.b5.copyWith(
+                              color: AppColors.textPrimary, fontSize: 12)),
+                    ],
+                  ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    if (post.price != null)
-                      Text('${post.price!.toStringAsFixed(0)} ฿', style: AppTypography.b4),
-                    if (post.price != null && feelingLabel.isNotEmpty)
-                      const SizedBox(width: 8),
-                    if (feelingLabel.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: feelingColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
-                        ),
-                        child: Text(feelingLabel,
-                            style: AppTypography.c3.copyWith(color: feelingColor)),
-                      ),
+                    if (post.price != null && (ref.read(authProvider)?.priceDisplayPrivacy ?? 'actual') != 'hidden') ...[
+                      _pillTag('${post.price!.toStringAsFixed(0)}฿', AppColors.tagGreen),
+                      const SizedBox(width: 6),
+                    ],
+                    if (post.heaviness != null) ...[
+                      _heavinessTag(post.heaviness!),
+                      const SizedBox(width: 6),
+                    ],
+                    if (post.feeling != null)
+                      _feelingTag(post.feeling!),
                   ],
                 ),
                 if (post.note != null && post.note!.isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(post.note!, style: AppTypography.b3.copyWith(color: AppColors.textSecondary)),
+                  Text(post.note!, style: AppTypography.b5.copyWith(
+                      color: AppColors.textPrimary, fontSize: 12)),
                 ],
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => _toggleLike(post.id),
-                      child: Row(
-                        children: [
-                          Icon(
-                            post.isLiked ? Icons.favorite : Icons.favorite_border,
-                            size: 18,
-                            color: post.isLiked ? AppColors.error : AppColors.grey500,
-                          ),
-                          const SizedBox(width: 4),
-                          Text('${post.likeCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-                        ],
+              ],
+            ),
+          ),
+          // Divider
+          const Divider(height: 0, thickness: 0.5, color: AppColors.border),
+          // Action row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => _toggleLike(post.id),
+                  child: Row(
+                    children: [
+                      Icon(
+                        post.isLiked ? Icons.favorite : Icons.favorite_border,
+                        size: 18,
+                        color: post.isLiked ? AppColors.error : AppColors.textPrimary,
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    GestureDetector(
-                      onTap: () => _openComments(post.id),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.grey500),
-                          const SizedBox(width: 4),
-                          Text('${post.commentCount}', style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.bookmark_border, size: 18, color: AppColors.grey500),
-                  ],
+                      const SizedBox(width: 7),
+                      Text('${post.likeCount}', style: AppTypography.b5.copyWith(
+                          color: AppColors.textPrimary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 15),
+                GestureDetector(
+                  onTap: () => _openComments(post.id),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.textPrimary),
+                      const SizedBox(width: 7),
+                      Text('${post.commentCount}', style: AppTypography.b5.copyWith(
+                          color: AppColors.textPrimary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => MealDetailSheet.showCollectionSelector(context, ref, post.id),
+                  child: const Icon(Icons.bookmark_border, size: 18, color: AppColors.textPrimary),
                 ),
               ],
             ),
@@ -299,46 +365,78 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: friend.id)),
       ),
       child: Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-        boxShadow: AppShadows.card,
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: AppColors.grey100,
-            backgroundImage: friend.photoUrl != null ? NetworkImage(friend.photoUrl!) : null,
-            child: friend.photoUrl == null
-                ? Text(friend.displayName[0].toUpperCase(),
-                    style: AppTypography.s1.copyWith(color: AppColors.grey500))
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(friend.displayName, style: AppTypography.s2),
-                if (friend.bio != null && friend.bio!.isNotEmpty)
-                  Text(friend.bio!, style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-              ],
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppColors.grey100,
+              backgroundImage: friend.photoUrl != null ? NetworkImage(friend.photoUrl!) : null,
+              child: friend.photoUrl == null
+                  ? Text(friend.displayName[0].toUpperCase(),
+                      style: AppTypography.s1.copyWith(color: AppColors.grey500))
+                  : null,
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusTiny),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(friend.displayName, style: AppTypography.s2),
+                  if (friend.bio != null && friend.bio!.isNotEmpty)
+                    Text(friend.bio!, style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
+                ],
+              ),
             ),
-            child: Text('Friends', style: AppTypography.c2.copyWith(color: AppColors.primary)),
-          ),
-        ],
-      ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.tagGreen,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+              ),
+              child: Text('Friends', style: AppTypography.c3.copyWith(
+                  color: AppColors.textPrimary, fontSize: 10)),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _pillTag(String label, Color bgColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+      ),
+      child: Text(label, style: AppTypography.c3.copyWith(
+          color: AppColors.textPrimary, fontSize: 10)),
+    );
+  }
+
+  Widget _heavinessTag(String heaviness) {
+    final (label, color) = switch (heaviness) {
+      'light' => ('Healthy', AppColors.tagGreen),
+      'satisfying' => ('Satisfying', AppColors.tagYellow),
+      'heavy' => ('Heavy', AppColors.tagRed),
+      _ => (heaviness, AppColors.grey100),
+    };
+    return _pillTag(label, color);
+  }
+
+  Widget _feelingTag(String feeling) {
+    final (label, color) = switch (feeling) {
+      'like' => ('Like', AppColors.tagGreen),
+      'neutral' => ('Neutral', AppColors.tagYellow),
+      'dislike' => ('Dislike', AppColors.tagRed),
+      _ => (feeling, AppColors.grey100),
+    };
+    return _pillTag(label, color);
   }
 }

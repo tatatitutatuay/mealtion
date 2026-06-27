@@ -22,7 +22,8 @@ class HomeScreen extends ConsumerWidget {
       body: dashboard.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
-        data: (data) => SingleChildScrollView(
+        data: (data) => SafeArea(
+          child: SingleChildScrollView(
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,27 +36,28 @@ class HomeScreen extends ConsumerWidget {
                   MaterialPageRoute(builder: (_) => const NotificationsScreen()),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 27),
               CalendarWidget(
                 mealDates: data.mealDatesThisMonth,
                 mealInfos: data.mealInfosThisMonth,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 27),
               const EmotionFilters(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 27),
               MonthlySnapshot(
                 totalMeals: data.totalMealsThisMonth,
                 totalFoods: data.totalFoodsThisMonth,
                 totalRestaurants: data.totalRestaurantsThisMonth,
                 totalSpent: data.totalSpentThisMonth,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 27),
               const RecapCards(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 27),
               RecentEntries(meals: data.recentMeals),
-              const SizedBox(height: 32),
+              const SizedBox(height: 120), // space for floating nav
             ],
           ),
+        ),
         ),
       ),
     );

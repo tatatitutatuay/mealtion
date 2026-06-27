@@ -24,16 +24,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _photoUrl;
   File? _pickedPhoto;
   bool _photoRemoved = false;
+  String? _coverUrl;
+  File? _pickedCover;
+  bool _coverRemoved = false;
   final _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     final profile = ref.read(myProfileProvider).valueOrNull;
-    _displayNameController = TextEditingController(text: profile?.displayName ?? '');
-    _usernameController = TextEditingController(text: profile?.username ?? '');
+    final auth = ref.read(authProvider);
+    _displayNameController = TextEditingController(text: profile?.displayName ?? auth?.displayName ?? '');
+    _usernameController = TextEditingController(text: profile?.username ?? auth?.username ?? '');
     _bioController = TextEditingController(text: profile?.bio ?? '');
-    _photoUrl = (profile?.photoUrl ?? '').isNotEmpty ? profile!.photoUrl : null;
+    _photoUrl = (profile?.photoUrl ?? auth?.photoUrl ?? '').isNotEmpty
+        ? (profile?.photoUrl ?? auth?.photoUrl)
+        : null;
+    _coverUrl = profile?.coverUrl;
   }
 
   @override
@@ -58,6 +65,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickCover() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked != null) {
+      setState(() => _pickedCover = File(picked.path));
+    }
+  }
+
+  Future<void> _takeCover() async {
+    final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    if (picked != null) {
+      setState(() => _pickedCover = File(picked.path));
+    }
+  }
+
   Future<void> _save() async {
     final userId = ref.read(authProvider)?.id;
     if (userId == null) return;
@@ -66,6 +87,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final supabase = ref.read(supabaseProvider);
       String? newPhotoUrl;
+      String? newCoverUrl;
 
       if (_pickedPhoto != null) {
         final ext = _pickedPhoto!.path.split('.').last;
@@ -77,13 +99,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         newPhotoUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
       }
 
-      await supabase.from('profiles').update({
+      if (_pickedCover != null) {
+        final ext = _pickedCover!.path.split('.').last;
+        final storagePath = '$userId/cover.$ext';
+        try {
+          await supabase.storage.from('covers').remove([storagePath]);
+        } catch (_) {}
+        await supabase.storage.from('covers').upload(storagePath, _pickedCover!);
+        newCoverUrl = supabase.storage.from('covers').getPublicUrl(storagePath);
+      }
+
+      await supabase.from('profiles').upsert({
+        'id': userId,
         'display_name': _displayNameController.text.trim(),
         'username': _usernameController.text.trim().isEmpty ? null : _usernameController.text.trim(),
         'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
         if (newPhotoUrl != null) 'photo_url': newPhotoUrl,
         if (_photoRemoved && newPhotoUrl == null) 'photo_url': '',
-      }).eq('id', userId);
+        if (newCoverUrl != null) 'cover_url': newCoverUrl,
+        if (_coverRemoved && newCoverUrl == null) 'cover_url': '',
+      }, onConflict: 'id');
 
       ref.invalidate(myProfileProvider);
       if (mounted) Navigator.pop(context);
@@ -113,81 +148,163 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.layoutMargin),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: GestureDetector(
-                onTap: () => showModalBottomSheet(
-                  context: context,
-                  builder: (ctx) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.photo_outlined),
-                          title: const Text('Choose from Gallery'),
-                          onTap: () { Navigator.pop(ctx); _pickPhoto(); },
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.camera_alt_outlined),
-                          title: const Text('Take Photo'),
-                          onTap: () { Navigator.pop(ctx); _takePhoto(); },
-                        ),
-                        if (_pickedPhoto != null || _photoUrl != null)
+            // Cover + Avatar (overlapping, like profile page)
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Cover photo
+                GestureDetector(
+                  onTap: () => showModalBottomSheet(
+                    context: context,
+                    builder: (ctx) => SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           ListTile(
-                            leading: const Icon(Icons.delete_outline, color: AppColors.error),
-                            title: const Text('Remove Photo'),
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              setState(() {
-                                _pickedPhoto = null;
-                                _photoUrl = null;
-                                _photoRemoved = true;
-                              });
-                            },
+                            leading: const Icon(Icons.photo_outlined),
+                            title: const Text('Choose Cover from Gallery'),
+                            onTap: () { Navigator.pop(ctx); _pickCover(); },
                           ),
-                      ],
+                          ListTile(
+                            leading: const Icon(Icons.camera_alt_outlined),
+                            title: const Text('Take Cover Photo'),
+                            onTap: () { Navigator.pop(ctx); _takeCover(); },
+                          ),
+                          if (_pickedCover != null || _coverUrl != null)
+                            ListTile(
+                              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                              title: const Text('Remove Cover'),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                setState(() {
+                                  _pickedCover = null;
+                                  _coverUrl = null;
+                                  _coverRemoved = true;
+                                });
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  child: Container(
+                    height: 222,
+                    width: double.infinity,
+                    color: AppColors.grey100,
+                    child: (_pickedCover != null
+                        ? Image.file(_pickedCover!, fit: BoxFit.cover)
+                        : (_coverUrl != null
+                            ? Image.network(_coverUrl!, fit: BoxFit.cover)
+                            : const Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate_outlined, size: 32, color: AppColors.grey500),
+                                    SizedBox(height: 4),
+                                    Text('Add Cover Photo', style: TextStyle(color: AppColors.grey500, fontSize: 12)),
+                                  ],
+                                ),
+                              ))),
+                  ),
+                ),
+                // Avatar centered, bottom half overflows the cover
+                Positioned(
+                  top: 158,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => showModalBottomSheet(
+                        context: context,
+                        builder: (ctx) => SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.photo_outlined),
+                                title: const Text('Choose from Gallery'),
+                                onTap: () { Navigator.pop(ctx); _pickPhoto(); },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.camera_alt_outlined),
+                                title: const Text('Take Photo'),
+                                onTap: () { Navigator.pop(ctx); _takePhoto(); },
+                              ),
+                              if (_pickedPhoto != null || _photoUrl != null)
+                                ListTile(
+                                  leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                                  title: const Text('Remove Photo'),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    setState(() {
+                                      _pickedPhoto = null;
+                                      _photoUrl = null;
+                                      _photoRemoved = true;
+                                    });
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      child: Container(
+                        width: 128,
+                        height: 128,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.grey100,
+                          border: Border.all(color: AppColors.white, width: 3),
+                          image: _pickedPhoto != null
+                              ? DecorationImage(image: FileImage(_pickedPhoto!), fit: BoxFit.cover)
+                              : (_photoUrl != null
+                                  ? DecorationImage(image: NetworkImage(_photoUrl!), fit: BoxFit.cover)
+                                  : null),
+                        ),
+                        child: (_pickedPhoto == null && _photoUrl == null)
+                            ? const Center(child: Icon(Icons.camera_alt, size: 32, color: AppColors.grey500))
+                            : null,
+                      ),
                     ),
                   ),
                 ),
-                child: CircleAvatar(
-                  radius: 48,
-                  backgroundColor: AppColors.grey100,
-                  backgroundImage: _pickedPhoto != null
-                      ? FileImage(_pickedPhoto!)
-                      : (_photoUrl != null ? NetworkImage(_photoUrl!) : null),
-                  child: (_pickedPhoto == null && _photoUrl == null)
-                      ? const Icon(Icons.camera_alt, color: AppColors.grey500)
-                      : null,
-                ),
+              ],
+            ),
+            const SizedBox(height: 74),
+            // Form fields
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Display Name', style: AppTypography.s2),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _displayNameController,
+                    maxLength: 30,
+                    decoration: const InputDecoration(hintText: 'Your display name'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Username', style: AppTypography.s2),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _usernameController,
+                    maxLength: 20,
+                    decoration: const InputDecoration(hintText: 'your_username', prefixText: '@'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Bio', style: AppTypography.s2),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _bioController,
+                    maxLength: 150,
+                    maxLines: 3,
+                    decoration: const InputDecoration(hintText: 'Tell something about yourself'),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            Text('Display Name', style: AppTypography.s2),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _displayNameController,
-              maxLength: 30,
-              decoration: const InputDecoration(hintText: 'Your display name'),
-            ),
-            const SizedBox(height: 16),
-            Text('Username', style: AppTypography.s2),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _usernameController,
-              maxLength: 20,
-              decoration: const InputDecoration(hintText: 'your_username', prefixText: '@'),
-            ),
-            const SizedBox(height: 16),
-            Text('Bio', style: AppTypography.s2),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _bioController,
-              maxLength: 150,
-              maxLines: 3,
-              decoration: const InputDecoration(hintText: 'Tell something about yourself'),
             ),
           ],
         ),

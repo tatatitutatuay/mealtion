@@ -29,9 +29,12 @@ class MonthlySnapshot extends StatelessWidget {
           Row(
             children: [
               _stat('Meals', '$totalMeals'),
+              const SizedBox(width: 8),
               _stat('Foods', '$totalFoods'),
+              const SizedBox(width: 8),
               _stat('Place', '$totalRestaurants'),
-              _stat('Spent', '${totalSpent.toStringAsFixed(0)}฿'),
+              const SizedBox(width: 8),
+              _stat('Spent (฿)', totalSpent.toStringAsFixed(0)),
             ],
           ),
         ],
@@ -41,12 +44,21 @@ class MonthlySnapshot extends StatelessWidget {
 
   Widget _stat(String label, String value) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(value, style: AppTypography.h5.copyWith(color: AppColors.textPrimary)),
-          const SizedBox(height: 4),
-          Text(label, style: AppTypography.b5.copyWith(color: AppColors.textSecondary)),
-        ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: AppSpacing.cardBorder,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: AppTypography.s2.copyWith(
+                color: AppColors.textPrimary, fontSize: 18)),
+            const SizedBox(height: 4),
+            Text(label, style: AppTypography.b5.copyWith(
+                color: AppColors.textSecondary, fontSize: 12)),
+          ],
+        ),
       ),
     );
   }
