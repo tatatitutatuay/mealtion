@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +34,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        emailRedirectTo: kIsWeb
+            ? '${Uri.base.origin}/auth/verify-email'
+            : 'mealtion://auth-callback',
       );
       if (mounted) {
         context.push('/auth/verify-email', extra: _emailController.text.trim());

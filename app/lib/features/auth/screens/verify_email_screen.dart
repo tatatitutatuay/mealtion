@@ -13,47 +13,53 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
 }
 
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
-  final _tokenController = TextEditingController();
-  bool _isLoading = false;
-
   @override
-  void dispose() {
-    _tokenController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Listen for auth state change — Supabase auto-handles the email link redirect
+    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+      if (event.event == AuthChangeEvent.signedIn && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email verified! Welcome to Mealtion.')),
+        );
+        // AuthGuard will redirect to onboarding/home automatically
+      }
+    });
   }
 
-  Future<void> _verify() async {
-    setState(() => _isLoading = true);
+  Future<void> _resend() async {
     try {
-      await Supabase.instance.client.auth.verifyOTP(
+      await Supabase.instance.client.auth.resend(
         email: widget.email,
-        token: _tokenController.text.trim(),
         type: OtpType.signup,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email verified! You can now log in.')),
+          const SnackBar(content: Text('Verification email resent.')),
         );
-        context.go('/auth/login');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verification failed: $e')),
+          SnackBar(content: Text('Failed to resend: $e')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Email')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/auth/login'),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Icon(Icons.mark_email_unread_outlined, size: 64, color: AppColors.grey500),
@@ -65,24 +71,19 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'We sent a verification link to ${widget.email}',
+              'We sent a verification link to ${widget.email}. Click the link in the email to confirm your account.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _tokenController,
-              decoration: const InputDecoration(
-                labelText: 'Verification Token',
-                border: OutlineInputBorder(),
-              ),
+            const SizedBox(height: 32),
+            TextButton(
+              onPressed: _resend,
+              child: const Text('Resend verification email'),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _isLoading ? null : _verify,
-              child: _isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Verify Email'),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => context.go('/auth/login'),
+              child: const Text('Back to login'),
             ),
           ],
         ),
