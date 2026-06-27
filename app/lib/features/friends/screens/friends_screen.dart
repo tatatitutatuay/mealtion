@@ -180,14 +180,25 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
       data: (posts) => posts.isEmpty
-          ? const Center(child: Text('No posts from friends yet'))
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
-              itemCount: posts.length,
-              itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: _feedPostCard(posts[i]),
+          ? RefreshIndicator(
+              onRefresh: () async => ref.invalidate(friendsFeedProvider),
+              child: ListView(
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                  const Center(child: Text('No posts from friends yet')),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: () async => ref.invalidate(friendsFeedProvider),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
+                itemCount: posts.length,
+                itemBuilder: (_, i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _feedPostCard(posts[i]),
+                ),
               ),
             ),
     );
@@ -199,12 +210,23 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, _) => Center(child: Text('Error: $err')),
       data: (list) => list.isEmpty
-          ? const Center(child: Text('No friends yet'))
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
-              itemCount: list.length,
-              itemBuilder: (_, i) => _friendTile(list[i]),
+          ? RefreshIndicator(
+              onRefresh: () async => ref.invalidate(friendsListProvider),
+              child: ListView(
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                  const Center(child: Text('No friends yet')),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: () async => ref.invalidate(friendsListProvider),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
+                itemCount: list.length,
+                itemBuilder: (_, i) => _friendTile(list[i]),
+              ),
             ),
     );
   }

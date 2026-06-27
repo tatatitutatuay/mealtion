@@ -64,15 +64,32 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen>
       error: (err, _) => Center(child: Text('Error: $err')),
       data: (items) {
         if (items.isEmpty) {
-          return Center(
-            child: Text('No pending requests', style: AppTypography.b3.copyWith(color: AppColors.textSecondary)),
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(pendingRequestsProvider);
+              ref.invalidate(sentRequestsProvider);
+              ref.invalidate(friendsListProvider);
+            },
+            child: ListView(
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                Center(child: Text('No pending requests', style: AppTypography.b3.copyWith(color: AppColors.textSecondary))),
+              ],
+            ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(AppSpacing.layoutMargin),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (_, i) => _receivedTile(items[i]),
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(pendingRequestsProvider);
+            ref.invalidate(sentRequestsProvider);
+            ref.invalidate(friendsListProvider);
+          },
+          child: ListView.separated(
+            padding: const EdgeInsets.all(AppSpacing.layoutMargin),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (_, i) => _receivedTile(items[i]),
+          ),
         );
       },
     );
@@ -86,15 +103,32 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen>
       error: (err, _) => Center(child: Text('Error: $err')),
       data: (items) {
         if (items.isEmpty) {
-          return Center(
-            child: Text('No sent requests', style: AppTypography.b3.copyWith(color: AppColors.textSecondary)),
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(pendingRequestsProvider);
+              ref.invalidate(sentRequestsProvider);
+              ref.invalidate(friendsListProvider);
+            },
+            child: ListView(
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                Center(child: Text('No sent requests', style: AppTypography.b3.copyWith(color: AppColors.textSecondary))),
+              ],
+            ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(AppSpacing.layoutMargin),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (_, i) => _sentTile(items[i]),
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(pendingRequestsProvider);
+            ref.invalidate(sentRequestsProvider);
+            ref.invalidate(friendsListProvider);
+          },
+          child: ListView.separated(
+            padding: const EdgeInsets.all(AppSpacing.layoutMargin),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (_, i) => _sentTile(items[i]),
+          ),
         );
       },
     );
