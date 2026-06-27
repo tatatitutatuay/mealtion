@@ -92,7 +92,6 @@ class NotificationsScreen extends ConsumerWidget {
     final supabase = ref.read(supabaseProvider);
     await supabase.from('notifications').update({'is_read': true}).eq('id', item.id);
     ref.invalidate(notificationsProvider);
-    ref.invalidate(unreadNotificationCountProvider);
 
     // Navigate based on type
     if (item.mealId != null && context.mounted) {

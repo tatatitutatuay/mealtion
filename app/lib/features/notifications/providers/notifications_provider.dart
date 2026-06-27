@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_client.dart';
 
 class NotificationItem {
@@ -60,15 +62,45 @@ final notificationsProvider = FutureProvider<List<NotificationItem>>((ref) async
   }).toList();
 });
 
-final unreadNotificationCountProvider = FutureProvider<int>((ref) async {
+final unreadNotificationCountProvider = StreamProvider<int>((ref) async* {
   final supabase = ref.watch(supabaseProvider);
   final userId = supabase.auth.currentUser!.id;
 
-  final result = await supabase
-      .from('notifications')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_read', false);
+  // Initial count
+  Future<int> fetchCount() async {
+    final result = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_read', false);
+    return (result as List<dynamic>).length;
+  }
 
-  return (result as List<dynamic>).length;
+  yield await fetchCount();
+
+  // Subscribe to realtime changes
+  final controller = StreamController<int>();
+  final channel = supabase.channel('notifications_realtime')
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'notifications',
+      filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'user_id', value: userId),
+      callback: (_) async {
+        try {
+          final count = await fetchCount();
+          controller.add(count);
+        } catch (_) {
+          // Skip on transient error; next realtime event will retry
+        }
+      },
+    )
+    ..subscribe();
+
+  ref.onDispose(() {
+    supabase.removeChannel(channel);
+    controller.close();
+  });
+
+  yield* controller.stream;
 });
