@@ -30,7 +30,14 @@ class ProfileScreen extends ConsumerWidget {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(height: 222, width: double.infinity, color: const Color(0xFFAAAAAA)),
+                    Container(
+                      height: 222,
+                      width: double.infinity,
+                      color: const Color(0xFFAAAAAA),
+                      child: data.coverUrl != null
+                          ? Image.network(data.coverUrl!, fit: BoxFit.cover)
+                          : null,
+                    ),
                     Positioned(
                       top: 16,
                       right: AppSpacing.layoutMargin,

@@ -3,6 +3,7 @@ class ProfileData {
   final String? username;
   final String? bio;
   final String? photoUrl;
+  final String? coverUrl;
   final int totalMeals;
   final int monthMeals;
   final int monthFoods;
@@ -14,6 +15,7 @@ class ProfileData {
     this.username,
     this.bio,
     this.photoUrl,
+    this.coverUrl,
     required this.totalMeals,
     required this.monthMeals,
     required this.monthFoods,

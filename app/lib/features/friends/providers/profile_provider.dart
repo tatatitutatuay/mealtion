@@ -12,7 +12,7 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
 
   final profileRows = await supabase
       .from('profiles')
-      .select('display_name, username, bio, photo_url')
+      .select('display_name, username, bio, photo_url, cover_url')
       .eq('id', userId)
       .limit(1);
 
@@ -69,15 +69,27 @@ final myProfileProvider = FutureProvider<ProfileData>((ref) async {
         .length;
   }
 
+  final friendsCount = await supabase
+      .from('friends')
+      .count(CountOption.exact)
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
   return ProfileData(
     displayName: profileData['display_name'] as String? ?? auth.displayName,
     username: profileData['username'] as String?,
     bio: profileData['bio'] as String?,
-    photoUrl: profileData['photo_url'] as String?,
+    photoUrl: (profileData['photo_url'] as String?)?.isNotEmpty == true
+        ? profileData['photo_url'] as String?
+        : null,
+    coverUrl: (profileData['cover_url'] as String?)?.isNotEmpty == true
+        ? profileData['cover_url'] as String?
+        : null,
     totalMeals: mealsCount,
     monthMeals: monthMealIds.length,
     monthFoods: monthFoodsCount,
     monthRestaurants: monthRestaurantsCount,
+    friendsCount: friendsCount,
   );
 });
 
@@ -87,7 +99,7 @@ final userProfileDataProvider = FutureProvider.family<ProfileData, String>((ref,
 
   final profileRows = await supabase
       .from('profiles')
-      .select('display_name, username, bio, photo_url')
+      .select('display_name, username, bio, photo_url, cover_url')
       .eq('id', userId)
       .limit(1);
 
@@ -112,7 +124,12 @@ final userProfileDataProvider = FutureProvider.family<ProfileData, String>((ref,
     displayName: profileData['display_name'] as String? ?? '',
     username: profileData['username'] as String?,
     bio: profileData['bio'] as String?,
-    photoUrl: profileData['photo_url'] as String?,
+    photoUrl: (profileData['photo_url'] as String?)?.isNotEmpty == true
+        ? profileData['photo_url'] as String?
+        : null,
+    coverUrl: (profileData['cover_url'] as String?)?.isNotEmpty == true
+        ? profileData['cover_url'] as String?
+        : null,
     totalMeals: mealsCount,
     monthMeals: 0,
     monthFoods: 0,
