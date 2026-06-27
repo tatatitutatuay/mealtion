@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealtion/core/theme/colors.dart';
+import 'package:mealtion/core/theme/spacing.dart';
+import 'package:mealtion/core/theme/typography.dart';
 import '../../../core/supabase/supabase_client.dart';
 
 final restaurantSearchProvider = FutureProvider.family<List<String>, String>((ref, query) async {
@@ -92,19 +95,48 @@ class _RestaurantSearchState extends ConsumerState<RestaurantSearch> {
     return Container(
       constraints: const BoxConstraints(maxHeight: 160),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(4),
+        border: AppSpacing.cardBorder,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
       ),
       child: ListView(
         shrinkWrap: true,
         children: suggestions
             .map((s) => ListTile(
                   dense: true,
-                  title: Text(s),
+                  title: Text(s, style: AppTypography.b5.copyWith(
+                      color: AppColors.textPrimary, fontSize: 12)),
                   onTap: () => onSelect(s),
                 ))
             .toList(),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, String hint, bool hasValue, VoidCallback onClear) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: AppTypography.b5.copyWith(color: AppColors.textFaded, fontSize: 12),
+      hintText: hint,
+      hintStyle: AppTypography.b5.copyWith(color: AppColors.textFaded, fontSize: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+        borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+        borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+        borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      suffixIcon: hasValue
+          ? GestureDetector(
+              onTap: onClear,
+              child: const Icon(Icons.clear, size: 16, color: AppColors.textFaded),
+            )
+          : null,
     );
   }
 
@@ -120,23 +152,17 @@ class _RestaurantSearchState extends ConsumerState<RestaurantSearch> {
     return Column(
       children: [
         TextField(
-          decoration: InputDecoration(
-            labelText: 'Restaurant',
-            hintText: 'Search or create...',
-            border: const OutlineInputBorder(),
-            suffixIcon: widget.restaurant != null
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _restaurantController.clear();
-                      setState(() => _restaurantQuery = '');
-                      widget.onRestaurantChanged(null);
-                    },
-                  )
-                : null,
+          decoration: _inputDecoration(
+            'Restaurant', 'Search or create...',
+            widget.restaurant != null, () {
+              _restaurantController.clear();
+              setState(() => _restaurantQuery = '');
+              widget.onRestaurantChanged(null);
+            },
           ),
           controller: _restaurantController,
           focusNode: _restaurantFocus,
+          style: AppTypography.b5.copyWith(color: AppColors.textPrimary, fontSize: 12),
           onChanged: (v) {
             setState(() => _restaurantQuery = v);
             widget.onRestaurantChanged(v.isEmpty ? null : v);
@@ -153,23 +179,17 @@ class _RestaurantSearchState extends ConsumerState<RestaurantSearch> {
         ],
         const SizedBox(height: 8),
         TextField(
-          decoration: InputDecoration(
-            labelText: 'Branch (optional)',
-            hintText: 'Search or create...',
-            border: const OutlineInputBorder(),
-            suffixIcon: widget.branch != null
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _branchController.clear();
-                      setState(() => _branchQuery = '');
-                      widget.onBranchChanged(null);
-                    },
-                  )
-                : null,
+          decoration: _inputDecoration(
+            'Branch (optional)', 'Search or create...',
+            widget.branch != null, () {
+              _branchController.clear();
+              setState(() => _branchQuery = '');
+              widget.onBranchChanged(null);
+            },
           ),
           controller: _branchController,
           focusNode: _branchFocus,
+          style: AppTypography.b5.copyWith(color: AppColors.textPrimary, fontSize: 12),
           onChanged: (v) {
             setState(() => _branchQuery = v);
             widget.onBranchChanged(v.isEmpty ? null : v);
