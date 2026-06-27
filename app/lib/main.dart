@@ -28,27 +28,17 @@ class _MealtionAppState extends ConsumerState<MealtionApp> {
   @override
   void initState() {
     super.initState();
-    _initPushNotifications();
-  }
-
-  Future<void> _initPushNotifications() async {
-    // Wait for auth state to be available
-    final auth = ref.read(authProvider);
-    if (auth != null) {
-      await ref.read(pushNotificationProvider).init();
-    }
+    // Listen for auth state changes and init push when authenticated
+    ref.listenManual(authProvider, (previous, next) {
+      if (next != null) {
+        ref.read(pushNotificationProvider).init();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(authInitProvider);
-    final auth = ref.watch(authProvider);
-
-    // Init push when user becomes authenticated
-    if (auth != null) {
-      ref.read(pushNotificationProvider).init();
-    }
-
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'Mealtion',

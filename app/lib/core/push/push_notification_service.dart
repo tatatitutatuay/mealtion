@@ -20,7 +20,12 @@ class PushNotificationService {
     if (_initialized) return;
     _initialized = true;
 
-    await Firebase.initializeApp();
+    try {
+      await Firebase.initializeApp();
+    } catch (_) {
+      _initialized = false;
+      return;
+    }
 
     // Local notifications setup (for foreground display)
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
