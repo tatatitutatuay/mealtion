@@ -107,8 +107,8 @@ Flutter installed via Homebrew (`/opt/homebrew/bin/flutter`, 3.44.4 stable). Coc
 - **Project URL**: `https://ssiaxokyvoqxroaavurx.supabase.co`
 - **Dashboard**: https://supabase.com/dashboard/project/ssiaxokyvoqxroaavurx
 - **SQL Editor**: Dashboard → SQL Editor (run schema/RLS changes here)
-- **Storage buckets**: `meal-photos` (public, owner-only upload/delete via RLS), `avatars` (public, owner-only upload/delete via RLS)
-- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies), `003_avatars_bucket.sql` (avatars bucket + RLS)
+- **Storage buckets**: `meal-photos` (public, owner-only upload/delete via RLS), `avatars` (public, owner-only upload/delete via RLS), `covers` (public, owner-only upload/delete via RLS)
+- **Migrations**: `supabase/migrations/001_schema.sql` (schema + bucket), `002_rls.sql` (RLS policies), `003_avatars_bucket.sql` (avatars bucket + RLS), `004_notification_triggers.sql` (notification triggers + realtime), `005_profile_cover.sql` (cover_url column + covers bucket + RLS)
 - **Key gotcha**: Kotlin incremental compilation must be disabled (`kotlin.incremental=false` in `gradle.properties`) because pub cache (C:) and project (D:) are on different drives
 - **Profile auto-creation**: `authInitProvider` upserts a profile row on auth state change (no DB trigger needed)
 - **Photo URLs**: `meal_photos.storage_path` stores the full public URL from `getPublicUrl()`, not the raw storage path
@@ -118,12 +118,12 @@ Flutter installed via Homebrew (`/opt/homebrew/bin/flutter`, 3.44.4 stable). Coc
 - **Onboarding**: 5-step flow in single `OnboardingScreen`. AuthGuard redirects to `/onboarding` if `profiles.onboarding_completed=false`. Router uses `_AuthRefreshListenable` to trigger redirect on auth state change.
 - **Meal Detail**: `MealDetailSheet` — DraggableScrollableSheet with PageView photo carousel. Supports vertical swipe between meals (calendar mode via `mealIds` list). Bookmark + delete + edit actions in header. Shows price level badge (cheap/moderate/expensive) based on user thresholds.
 - **Meal Edit**: `AddMealSheet` accepts optional `mealId`. When provided, loads meal from DB, downloads photos to temp files, pre-fills all fields. Save calls `updateMeal` instead of `createMeal`.
-- **Notifications**: `notificationsProvider` fetches with actor join. `unreadNotificationCountProvider` wired to GreetingBar badge. Tap marks as read + opens meal detail if `meal_id` present.
+- **Notifications**: `notificationsProvider` fetches with actor join. `unreadNotificationCountProvider` is a StreamProvider with Supabase realtime subscription for live badge updates. Tap marks as read + opens meal detail if `meal_id` present. DB triggers (`004_notification_triggers.sql`) auto-insert notifications for likes, comments, friend requests, and friend accepts.
 - **Friend Requests**: `FriendRequestsScreen` with Received/Sent tabs. `acceptFriendRequest` creates reciprocal row. `cancelSentRequest` deletes pending row. Unread badge on mail icon in FriendsScreen.
 - **Friend Profiles**: `FriendProfileScreen` uses `userProfileDataProvider` (parameterized) + `userGalleryProvider` (public meals only). Reuses gallery timeline/grid layout. Also used for "View Profile" on own profile.
 - **Settings**: `SettingsScreen` — currency, price privacy, notification toggles, account deletion (cascades via profile delete), logout.
 - **Bookmark Actions**: `BookmarkActions` provider (createCollection, renameCollection, deleteCollection, addMealToCollection, removeMealFromCollection). Collection selector bottom sheet in meal detail. Select mode in collections screen for batch delete + rename.
-- **Profile Photo**: `EditProfileScreen` has tappable avatar with gallery/camera picker. Uploads to `avatars` bucket. Supports removing photo.
+- **Profile Photo & Cover**: `EditProfileScreen` has tappable avatar + cover photo with gallery/camera picker. Avatar uploads to `avatars` bucket, cover uploads to `covers` bucket. Both support removing. Layout mirrors `ProfileScreen` with overlapping avatar on cover banner. `myProfileProvider` fetches `cover_url` + friends count.
 - **Restaurant Autocomplete**: `restaurantSearchProvider` + `branchSearchProvider` query DB for matches as user types (min 2 chars). Suggestion box shown below input.
 - **Calendar Filters**: `CalendarWidget` filter chip cycles through Health/Heaviness/Feeling/Price modes. Dots colored accordingly (green/orange/red).
 - **Draft Meals**: `draftProvider` saves drafts to `shared_preferences`. Resume via edit-note button in AddMealSheet header. Photos not persisted (paths only).
