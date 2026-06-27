@@ -162,23 +162,48 @@ class MealApi {
       'note': state.note,
     }).eq('id', mealId);
 
-    // Photos: keep existing, upload only new ones
-    final newPhotos = state.photos.where((p) => !p.isExisting).toList();
-    final existingCount = state.photos.where((p) => p.isExisting).length;
+    // Photos: delete removed, upload new, update sort_order for all
+    final dbPhotos = await _supabase
+        .from('meal_photos')
+        .select('id, storage_path')
+        .eq('meal_id', mealId);
+    final dbPhotoIds = <String, String>{}; // storage_path -> id
+    for (final p in (dbPhotos as List<dynamic>)) {
+      final row = p as Map<String, dynamic>;
+      dbPhotoIds[row['storage_path'] as String] = row['id'] as String;
+    }
 
-    // If there are new photos, we need to append them after existing ones
-    for (var i = 0; i < newPhotos.length; i++) {
-      final photo = newPhotos[i];
-      final sortOrder = existingCount + i;
-      final ext = photo.file.path.split('.').last;
-      final storagePath = '$userId/$mealId/$sortOrder.$ext';
-      await _supabase.storage.from('meal-photos').upload(storagePath, photo.file);
-      final publicUrl = _supabase.storage.from('meal-photos').getPublicUrl(storagePath);
-      await _supabase.from('meal_photos').insert({
-        'meal_id': mealId,
-        'storage_path': publicUrl,
-        'sort_order': sortOrder,
-      });
+    // Determine which existing photos are kept (by storage_path)
+    final keptPaths = state.photos
+        .where((p) => p.isExisting && p.storagePath != null)
+        .map((p) => p.storagePath!)
+        .toSet();
+
+    // Delete removed photos from DB + storage
+    final removedPaths = dbPhotoIds.keys.toSet().difference(keptPaths);
+    for (final path in removedPaths) {
+      await _supabase.from('meal_photos').delete().eq('id', dbPhotoIds[path]!);
+      _deletePhotoFromStorage(path);
+    }
+
+    // Upload new photos and update sort_order for all
+    for (var i = 0; i < state.photos.length; i++) {
+      final photo = state.photos[i];
+      if (!photo.isExisting) {
+        final ext = photo.file.path.split('.').last;
+        final storagePath = '$userId/$mealId/$i.$ext';
+        await _supabase.storage.from('meal-photos').upload(storagePath, photo.file);
+        final publicUrl = _supabase.storage.from('meal-photos').getPublicUrl(storagePath);
+        await _supabase.from('meal_photos').insert({
+          'meal_id': mealId,
+          'storage_path': publicUrl,
+          'sort_order': i,
+        });
+      } else if (photo.storagePath != null && dbPhotoIds.containsKey(photo.storagePath)) {
+        await _supabase.from('meal_photos')
+            .update({'sort_order': i})
+            .eq('id', dbPhotoIds[photo.storagePath]!);
+      }
     }
 
     // Replace foods: insert new, delete removed
@@ -251,19 +276,28 @@ class MealApi {
         .eq('meal_id', mealId);
     for (final p in (photos as List<dynamic>)) {
       final url = p['storage_path'] as String;
-      // Extract path from public URL
-      final uri = Uri.parse(url);
-      final pathSegments = uri.pathSegments;
-      // URL format: /storage/v1/object/public/meal-photos/userId/mealId/0.jpg
-      final bucketIdx = pathSegments.indexOf('meal-photos');
-      if (bucketIdx >= 0 && bucketIdx + 1 < pathSegments.length) {
-        final storagePath = pathSegments.sublist(bucketIdx + 1).join('/');
-        try {
-          await _supabase.storage.from('meal-photos').remove([storagePath]);
-        } catch (_) {}
-      }
+      _deletePhotoFromStorage(url);
     }
     // Delete meal row (cascades to meal_photos, meal_foods, meal_tags)
     await _supabase.from('meals').delete().eq('id', mealId).eq('user_id', userId);
+  }
+
+  void _deletePhotoFromStorage(String storagePathOrUrl) {
+    String? rawPath;
+    if (storagePathOrUrl.startsWith('http')) {
+      final uri = Uri.parse(storagePathOrUrl);
+      final pathSegments = uri.pathSegments;
+      final bucketIdx = pathSegments.indexOf('meal-photos');
+      if (bucketIdx >= 0 && bucketIdx + 1 < pathSegments.length) {
+        rawPath = pathSegments.sublist(bucketIdx + 1).join('/');
+      }
+    } else {
+      rawPath = storagePathOrUrl;
+    }
+    if (rawPath != null) {
+      try {
+        _supabase.storage.from('meal-photos').remove([rawPath]);
+      } catch (_) {}
+    }
   }
 }

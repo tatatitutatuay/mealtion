@@ -450,7 +450,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               backgroundColor: AppColors.grey100,
               backgroundImage: friend.photoUrl != null ? NetworkImage(friend.photoUrl!) : null,
               child: friend.photoUrl == null
-                  ? Text(friend.displayName[0].toUpperCase(),
+                  ? Text(friend.displayName.isNotEmpty ? friend.displayName[0].toUpperCase() : '?',
                       style: AppTypography.s1.copyWith(color: AppColors.grey500))
                   : null,
             ),

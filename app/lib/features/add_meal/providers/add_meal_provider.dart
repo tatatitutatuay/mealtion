@@ -26,6 +26,7 @@ class AddMealNotifier extends StateNotifier<AddMealState> {
         file: photos[i].file,
         sortOrder: i,
         isExisting: photos[i].isExisting,
+        storagePath: photos[i].storagePath,
       );
     }
     state = state.copyWith(photos: photos);
@@ -42,6 +43,7 @@ class AddMealNotifier extends StateNotifier<AddMealState> {
         file: photos[i].file,
         sortOrder: i,
         isExisting: photos[i].isExisting,
+        storagePath: photos[i].storagePath,
       );
     }
     state = state.copyWith(photos: photos);

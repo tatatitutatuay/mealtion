@@ -12,8 +12,9 @@ class AddMealPhoto {
   final File file;
   int sortOrder;
   final bool isExisting;
+  final String? storagePath;
 
-  AddMealPhoto({required this.localPath, required this.file, required this.sortOrder, this.isExisting = false});
+  AddMealPhoto({required this.localPath, required this.file, required this.sortOrder, this.isExisting = false, this.storagePath});
 }
 
 class AddMealFood {

@@ -76,7 +76,7 @@ class _AddMealSheetState extends ConsumerState<AddMealSheet> {
           final filePath = '${tempDir.path}/edit_${widget.mealId}_$i.jpg';
           final file = File(filePath);
           await file.writeAsBytes(response.bodyBytes);
-          photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i, isExisting: true));
+          photos.add(AddMealPhoto(localPath: filePath, file: file, sortOrder: i, isExisting: true, storagePath: url));
         } catch (e) {
           debugPrint('Failed to download photo $i: $e');
         }
