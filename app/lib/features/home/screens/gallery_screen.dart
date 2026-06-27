@@ -186,7 +186,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   Widget _gridView(List<GalleryItem> items) {
     return GridView.builder(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 4,
@@ -230,7 +230,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
       itemCount: grouped.length,
       itemBuilder: (_, i) {
         final entry = grouped.entries.elementAt(i);

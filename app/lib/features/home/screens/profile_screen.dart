@@ -22,131 +22,133 @@ class ProfileScreen extends ConsumerWidget {
       body: profile.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
-        data: (data) => SingleChildScrollView(
-          child: Column(
-            children: [
-              // Grey banner + settings icon
-              Stack(
-                children: [
-                  Container(height: 222, width: double.infinity, color: const Color(0xFFAAAAAA)),
-                  Positioned(
-                    top: 60,
-                    right: AppSpacing.layoutMargin,
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        data: (data) => SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Grey banner + settings icon
+                Stack(
+                  children: [
+                    Container(height: 222, width: double.infinity, color: const Color(0xFFAAAAAA)),
+                    Positioned(
+                      top: 16,
+                      right: AppSpacing.layoutMargin,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        ),
+                        child: const Icon(Icons.settings_outlined, size: 24, color: AppColors.textPrimary),
                       ),
-                      child: const Icon(Icons.settings_outlined, size: 24, color: AppColors.textPrimary),
                     ),
-                  ),
-                  // Avatar overlapping
-                  Positioned(
-                    top: 158,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        width: 128,
-                        height: 128,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.grey100,
-                          image: data.photoUrl != null
-                              ? DecorationImage(image: NetworkImage(data.photoUrl!), fit: BoxFit.cover)
+                    // Avatar overlapping
+                    Positioned(
+                      top: 158,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 128,
+                          height: 128,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.grey100,
+                            image: data.photoUrl != null
+                                ? DecorationImage(image: NetworkImage(data.photoUrl!), fit: BoxFit.cover)
+                                : null,
+                          ),
+                          child: data.photoUrl == null
+                              ? Center(child: Text(data.displayName[0].toUpperCase(),
+                                  style: const TextStyle(fontSize: 48, color: AppColors.grey500)))
                               : null,
                         ),
-                        child: data.photoUrl == null
-                            ? Center(child: Text(data.displayName[0].toUpperCase(),
-                                style: const TextStyle(fontSize: 48, color: AppColors.grey500)))
-                            : null,
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Name + bio
+                Text(data.displayName, style: AppTypography.s1.copyWith(
+                    color: AppColors.textPrimary, fontSize: 18)),
+                if (data.bio != null && data.bio!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(data.bio!, style: AppTypography.b5.copyWith(
+                      color: AppColors.textPrimary, fontSize: 14)),
+                ],
+                const SizedBox(height: 16),
+                // Edit + View Profile buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _pillButton('Edit Profile', Icons.edit_outlined, () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                    )),
+                    const SizedBox(width: 10),
+                    _pillButton('View Profile', Icons.visibility_outlined, () {
+                      final userId = ref.read(authProvider)?.id;
+                      if (userId != null) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: userId)),
+                        );
+                      }
+                    }),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // 4 stat boxes
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
+                  child: Row(
+                    children: [
+                      _statBox('Meals', '${data.totalMeals}'),
+                      const SizedBox(width: 10),
+                      _statBox('Foods', '${data.monthFoods}'),
+                      const SizedBox(width: 10),
+                      _statBox('Place', '${data.monthRestaurants}'),
+                      const SizedBox(width: 10),
+                      _statBox('Friends', '${data.friendsCount}'),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Name + bio
-              Text(data.displayName, style: AppTypography.s1.copyWith(
-                  color: AppColors.textPrimary, fontSize: 18)),
-              if (data.bio != null && data.bio!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(data.bio!, style: AppTypography.b5.copyWith(
-                    color: AppColors.textPrimary, fontSize: 14)),
+                ),
+                const SizedBox(height: 24),
+                // Your Stat section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Your Stat', style: AppTypography.s2.copyWith(
+                          color: AppColors.textPrimary, fontSize: 16)),
+                      const SizedBox(height: 8),
+                      // Food Personality card
+                      _foodPersonalityCard(context),
+                      const SizedBox(height: 10),
+                      // Recap cards
+                      Row(
+                        children: [
+                          Expanded(child: _recapCard(context, 'April 2026', Icons.auto_awesome_mosaic_outlined)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _recapCard(context, '2026', Icons.auto_awesome_outlined)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Collection Badge card
+                      _collectionBadgeCard(context),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Log out
+                TextButton(
+                  onPressed: () async {
+                    await Supabase.instance.client.auth.signOut();
+                    if (context.mounted) context.go('/auth/login');
+                  },
+                  child: Text('Log Out',
+                      style: AppTypography.buttonMedium.copyWith(color: AppColors.error)),
+                ),
+                const SizedBox(height: 120), // space for floating nav
               ],
-              const SizedBox(height: 16),
-              // Edit + View Profile buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _pillButton('Edit Profile', Icons.edit_outlined, () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                  )),
-                  const SizedBox(width: 10),
-                  _pillButton('View Profile', Icons.visibility_outlined, () {
-                    final userId = ref.read(authProvider)?.id;
-                    if (userId != null) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => FriendProfileScreen(userId: userId)),
-                      );
-                    }
-                  }),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // 4 stat boxes
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
-                child: Row(
-                  children: [
-                    _statBox('Meals', '${data.totalMeals}'),
-                    const SizedBox(width: 10),
-                    _statBox('Foods', '${data.monthFoods}'),
-                    const SizedBox(width: 10),
-                    _statBox('Place', '${data.monthRestaurants}'),
-                    const SizedBox(width: 10),
-                    _statBox('Friends', '${data.friendsCount}'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Your Stat section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.layoutMargin),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Your Stat', style: AppTypography.s2.copyWith(
-                        color: AppColors.textPrimary, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    // Food Personality card
-                    _foodPersonalityCard(context),
-                    const SizedBox(height: 10),
-                    // Recap cards
-                    Row(
-                      children: [
-                        Expanded(child: _recapCard(context, 'April 2026', Icons.auto_awesome_mosaic_outlined)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _recapCard(context, '2026', Icons.auto_awesome_outlined)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Collection Badge card
-                    _collectionBadgeCard(context),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Log out
-              TextButton(
-                onPressed: () async {
-                  await Supabase.instance.client.auth.signOut();
-                  if (context.mounted) context.go('/auth/login');
-                },
-                child: Text('Log Out',
-                    style: AppTypography.buttonMedium.copyWith(color: AppColors.error)),
-              ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),

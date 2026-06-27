@@ -54,7 +54,7 @@ class HomeScreen extends ConsumerWidget {
               const RecapCards(),
               const SizedBox(height: 27),
               RecentEntries(meals: data.recentMeals),
-              const SizedBox(height: 32),
+              const SizedBox(height: 120), // space for floating nav
             ],
           ),
         ),

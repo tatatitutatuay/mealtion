@@ -181,8 +181,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       data: (posts) => posts.isEmpty
           ? const Center(child: Text('No posts from friends yet'))
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.layoutMargin, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
               itemCount: posts.length,
               itemBuilder: (_, i) => Padding(
                 padding: const EdgeInsets.only(bottom: 20),
@@ -200,8 +200,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       data: (list) => list.isEmpty
           ? const Center(child: Text('No friends yet'))
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.layoutMargin, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.layoutMargin, 16, AppSpacing.layoutMargin, 120),
               itemCount: list.length,
               itemBuilder: (_, i) => _friendTile(list[i]),
             ),
