@@ -161,13 +161,27 @@ final searchUsersProvider = FutureProvider.family<List<FriendProfile>, String>((
   final rows = await supabase
       .from('profiles')
       .select('id, display_name, username, bio, photo_url')
-      .or('username.ilike.%$query%,display_name.ilike.%$query%')
+      .eq('username', query)
       .neq('id', currentUserId)
       .limit(20);
 
+  // Fetch sent requests by current user to check pending status
+  final sentRows = await supabase
+      .from('friends')
+      .select('friend_user_id, status')
+      .eq('user_id', currentUserId);
+  final sentMap = <String, String>{};
+  for (final r in sentRows as List<dynamic>) {
+    final row = r as Map<String, dynamic>;
+    sentMap[row['friend_user_id'] as String] = row['status'] as String;
+  }
+
   return (rows as List<dynamic>)
       .cast<Map<String, dynamic>>()
-      .map((r) => FriendProfile.fromJson(r))
+      .map((r) {
+        final id = r['id'] as String;
+        return FriendProfile.fromJson(r).copyWith(friendStatus: sentMap[id]);
+      })
       .toList();
 });
 

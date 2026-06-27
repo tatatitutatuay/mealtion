@@ -55,10 +55,13 @@ class UserSearchScreen extends ConsumerWidget {
                         try {
                           await ref.read(friendActionsProvider).sendRequest(userId);
                           ref.invalidate(sentRequestsProvider);
+                          // Invalidate all searchUsersProvider instances so ConnectScreen refreshes
+                          ref.invalidate(searchUsersProvider);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Friend request sent!')),
                             );
+                            Navigator.pop(context);
                           }
                         } catch (e) {
                           if (context.mounted) {

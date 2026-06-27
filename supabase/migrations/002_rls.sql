@@ -24,9 +24,9 @@ RETURNS BOOLEAN LANGUAGE SQL SECURITY DEFINER AS $$
   );
 $$;
 
--- Profiles: read own, update own, insert own
-CREATE POLICY "profiles_select_own" ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
+-- Profiles: read all (needed for friend search, friend profiles, feed), update/insert own
+CREATE POLICY "profiles_select_all" ON public.profiles
+  FOR SELECT USING (true);
 
 CREATE POLICY "profiles_insert_own" ON public.profiles
   FOR INSERT WITH CHECK (auth.uid() = id);

@@ -25,6 +25,17 @@ class FriendProfile {
       friendStatus: json['friend_status'] as String?,
     );
   }
+
+  FriendProfile copyWith({String? friendStatus}) {
+    return FriendProfile(
+      id: id,
+      displayName: displayName,
+      username: username,
+      bio: bio,
+      photoUrl: photoUrl,
+      friendStatus: friendStatus ?? this.friendStatus,
+    );
+  }
 }
 
 class FeedPost {
