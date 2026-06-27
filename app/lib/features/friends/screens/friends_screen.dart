@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
 import 'package:mealtion/core/theme/typography.dart';
@@ -254,7 +255,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                       CircleAvatar(
                         radius: 17,
                         backgroundColor: AppColors.grey100,
-                        backgroundImage: post.photoUrl != null ? NetworkImage(post.photoUrl!) : null,
+                        backgroundImage: post.photoUrl != null ? CachedNetworkImageProvider(post.photoUrl!) : null,
                         child: post.photoUrl == null
                             ? Text(post.displayName[0].toUpperCase(),
                                 style: AppTypography.b6.copyWith(color: AppColors.textSecondary))
@@ -288,7 +289,12 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               width: double.infinity,
               color: AppColors.photoPlaceholder,
               child: post.thumbnailUrl != null
-                  ? Image.network(post.thumbnailUrl!, fit: BoxFit.cover)
+                  ? CachedNetworkImage(
+                      imageUrl: post.thumbnailUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      errorWidget: (_, __, ___) => const Icon(Icons.restaurant, size: 48, color: AppColors.grey500),
+                    )
                   : const Icon(Icons.restaurant, size: 48, color: AppColors.grey500),
             ),
           ),

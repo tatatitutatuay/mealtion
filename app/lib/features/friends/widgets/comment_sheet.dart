@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:mealtion/core/theme/colors.dart';
 import 'package:mealtion/core/theme/spacing.dart';
@@ -142,7 +143,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                                 CircleAvatar(
                                   radius: 18,
                                   backgroundColor: AppColors.grey100,
-                                  backgroundImage: c.photoUrl != null ? NetworkImage(c.photoUrl!) : null,
+                                  backgroundImage: c.photoUrl != null ? CachedNetworkImageProvider(c.photoUrl!) : null,
                                   child: c.photoUrl == null
                                       ? Text(c.displayName[0].toUpperCase(),
                                           style: AppTypography.b6.copyWith(color: AppColors.grey500))

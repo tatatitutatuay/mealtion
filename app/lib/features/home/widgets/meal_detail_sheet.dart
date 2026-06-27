@@ -499,7 +499,7 @@ class _MealContent extends ConsumerWidget {
           CircleAvatar(
             radius: 16,
             backgroundColor: AppColors.grey100,
-            backgroundImage: meal.ownerPhotoUrl != null ? NetworkImage(meal.ownerPhotoUrl!) : null,
+            backgroundImage: meal.ownerPhotoUrl != null ? CachedNetworkImageProvider(meal.ownerPhotoUrl!) : null,
             child: meal.ownerPhotoUrl == null
                 ? Text(meal.ownerName![0].toUpperCase(),
                     style: AppTypography.b6.copyWith(color: AppColors.grey500))
@@ -685,7 +685,7 @@ class _MealContent extends ConsumerWidget {
                     CircleAvatar(
                       radius: 14,
                       backgroundColor: AppColors.grey100,
-                      backgroundImage: c.photoUrl != null ? NetworkImage(c.photoUrl!) : null,
+                      backgroundImage: c.photoUrl != null ? CachedNetworkImageProvider(c.photoUrl!) : null,
                       child: c.photoUrl == null
                           ? Text(c.displayName[0].toUpperCase(),
                               style: AppTypography.c3.copyWith(color: AppColors.grey500))
